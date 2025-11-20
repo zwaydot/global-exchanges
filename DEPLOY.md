@@ -23,9 +23,10 @@
 
 3. **配置构建设置**
    - **Framework preset**: Vite
-   - **Build command**: `pnpm build`
+   - **Build command**: `pnpm install && pnpm build`
    - **Build output directory**: `dist`
    - **Root directory**: `/` (留空)
+   - ⚠️ **重要**: 如果 Cloudflare 自动检测到 npm，需要在构建命令前添加 `corepack enable && corepack prepare pnpm@latest --activate &&` 或使用 `npm install -g pnpm && pnpm install && pnpm build`
 
 4. **配置环境变量**
    - 在 "Environment variables" 部分添加：
