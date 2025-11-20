@@ -1,0 +1,5 @@
+{
+  "name": "Global Exchanges",
+  "description": "Interactive 3D visualization of the world's leading stock exchanges. Explore trading volumes, market capitalization, and AI-generated financial insights for NYSE, NASDAQ, LSE, and more.",
+  "requestFramePermissions": []
+}
