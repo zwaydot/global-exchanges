@@ -14,9 +14,19 @@ export const onRequest: PagesFunction = async (context) => {
   try {
     // 从环境变量获取 API key
     const apiKey = context.env.GEMINI_API_KEY;
+    
+    // 添加调试日志（在 Cloudflare 控制台可见）
+    console.log('[Exchange Details API] Request received');
+    console.log('[Exchange Details API] API Key exists:', !!apiKey);
+    console.log('[Exchange Details API] API Key length:', apiKey?.length || 0);
+    
     if (!apiKey) {
+      console.error('[Exchange Details API] GEMINI_API_KEY not configured in environment variables');
       return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY not configured' }),
+        JSON.stringify({ 
+          error: 'GEMINI_API_KEY not configured',
+          message: 'Please set GEMINI_API_KEY in Cloudflare Pages environment variables'
+        }),
         {
           status: 500,
           headers: {
@@ -87,6 +97,8 @@ export const onRequest: PagesFunction = async (context) => {
       }
     };
 
+    console.log('[Exchange Details API] Calling Gemini API for:', exchangeName);
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -97,8 +109,12 @@ export const onRequest: PagesFunction = async (context) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('[Exchange Details API] Gemini API error:', response.status, errorText);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
+    
+    console.log('[Exchange Details API] Gemini API response received');
 
     const result = await response.json();
     
@@ -119,14 +135,19 @@ export const onRequest: PagesFunction = async (context) => {
     });
 
   } catch (error) {
-    console.error("Error fetching exchange details:", error);
+    console.error("[Exchange Details API] Error:", error);
+    if (error instanceof Error) {
+      console.error("[Exchange Details API] Error message:", error.message);
+      console.error("[Exchange Details API] Error stack:", error.stack);
+    }
     
     // 返回错误响应
     return new Response(
       JSON.stringify({
         description: "Unable to load details at this time. Please try again later.",
         keyFacts: ["Data unavailable"],
-        tradingHours: "--:--"
+        tradingHours: "--:--",
+        error: error instanceof Error ? error.message : 'Unknown error'
       }),
       {
         status: 200, // 返回 200 以便前端可以显示错误消息
