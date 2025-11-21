@@ -28,7 +28,8 @@ export const onRequest: PagesFunction = async (context) => {
       );
     }
 
-    const SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA', 'JPM', 'XOM'];
+    // 仅使用免费 plan 白名单中最核心的指数/龙头
+    const SYMBOLS = ['SPY', 'QQQ', 'SPYG', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'XOM'];
     const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
 
     const results = [];
@@ -56,6 +57,9 @@ export const onRequest: PagesFunction = async (context) => {
       } catch (err) {
         console.error(`[Market Ticker API] Error fetching ${symbol}:`, err);
       }
+
+      // 避免命中免费 plan 的速率限制
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
 
     if (results.length === 0) {

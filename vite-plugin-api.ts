@@ -89,7 +89,7 @@ export function apiProxy(): Plugin {
               return;
             }
 
-            const SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA', 'JPM', 'XOM'];
+            const SYMBOLS = ['SPY', 'QQQ', 'SPYG', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'XOM'];
             const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
 
             const results: any[] = [];
@@ -117,6 +117,9 @@ export function apiProxy(): Plugin {
                 change: item.change,
                 changesPercentage: item.changesPercentage || item.changePercentage || 0
               });
+
+              // 轻微延迟，避免本地开发快速刷新时触发 429
+              await new Promise(resolve => setTimeout(resolve, 250));
             }
 
             if (results.length === 0) {
