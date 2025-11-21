@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import GlobeViz from './components/GlobeViz';
 import DetailPanel from './components/DetailPanel';
+import Ticker from './components/Ticker';
 import { STOCK_EXCHANGES } from './constants';
 import { Exchange, ExchangeDetails } from './types';
 import { fetchExchangeDetails } from './services/geminiService';
@@ -65,35 +66,8 @@ const App: React.FC = () => {
         </nav>
       </header>
 
-      {/* Semantic Legend Section */}
-      <section 
-        aria-label="Map Legend"
-        className="absolute bottom-6 left-4 right-4 md:bottom-8 md:left-8 md:right-auto z-10 pointer-events-none bg-[#0B101B]/80 backdrop-blur-md p-3 md:p-5 rounded-xl border border-amber-500/20 shadow-[0_0_30px_rgba(0,0,0,0.5)] flex flex-row md:flex-col justify-center md:justify-start items-center gap-4 md:w-auto"
-      >
-        <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:block">Market Activity</div>
-        
-        {/* Icons Container */}
-        <div className="flex items-center gap-4 md:gap-8" role="img" aria-label="Pulse indicators: larger pulse means higher volume">
-           {/* High Activity Icon */}
-           <div className="flex flex-col items-center gap-2">
-              <div className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center">
-                 <div className="absolute w-1.5 h-1.5 md:w-2 md:h-2 bg-amber-400 rounded-full shadow-[0_0_10px_#fbbf24] z-10"></div>
-                 <div className="absolute w-4 h-4 md:w-5 md:h-5 border border-amber-400/80 rounded-full"></div>
-                 <div className="absolute w-8 h-8 md:w-10 md:h-10 border border-amber-400/40 rounded-full"></div>
-              </div>
-              <span className="text-[9px] md:text-[10px] text-gray-400 font-medium whitespace-nowrap">High Volume</span>
-           </div>
-           
-           {/* Low Activity Icon */}
-           <div className="flex flex-col items-center gap-2">
-              <div className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center">
-                 <div className="absolute w-1 h-1 md:w-1.5 md:h-1.5 bg-amber-400/70 rounded-full z-10"></div>
-                 <div className="absolute w-3 h-3 md:w-4 md:h-4 border border-amber-400/30 rounded-full"></div>
-              </div>
-              <span className="text-[9px] md:text-[10px] text-gray-500 font-medium whitespace-nowrap">Low Volume</span>
-           </div>
-        </div>
-      </section>
+      {/* Semantic Legend Section - REMOVED per user request */}
+
 
       {/* SEO & Accessibility: Hidden text content for Crawlers and Screen Readers */}
       {/* AEO Optimization: Providing clear Q&A format for Answer Engines */}
@@ -146,6 +120,9 @@ const App: React.FC = () => {
           />
         </aside>
       )}
+      
+      {/* Financial Ticker */}
+      <Ticker />
     </div>
   );
 };
