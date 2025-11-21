@@ -2,8 +2,15 @@ name = "global-exchanges"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
 
+kv_namespaces = [
+  { binding = "MARKET_TICKER_CACHE", id = "f47995f0fdb143a4b76d073f969e5708" }
+]
+
 [env.production]
 name = "global-exchanges"
+kv_namespaces = [
+  { binding = "MARKET_TICKER_CACHE", id = "f47995f0fdb143a4b76d073f969e5708" }
+]
 
 [env.production.vars]
 # 环境变量将在 Cloudflare Pages 控制台中设置
