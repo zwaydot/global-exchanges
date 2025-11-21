@@ -3,6 +3,7 @@ import { loadEnv } from 'vite';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
+const DEV_CACHE_TTL_MS = 5 * 60 * 1000;
 let cachedTicker: { timestamp: number; data: any[] } = { timestamp: 0, data: [] };
 
 /**
@@ -95,19 +96,26 @@ export function apiProxy(): Plugin {
             const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
 
             const now = Date.now();
-            if (cachedTicker.timestamp && now - cachedTicker.timestamp < 60_000 && cachedTicker.data.length > 0) {
+            if (cachedTicker.timestamp && now - cachedTicker.timestamp < DEV_CACHE_TTL_MS && cachedTicker.data.length > 0) {
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify(cachedTicker.data));
               return;
             }
 
             const results: any[] = [];
+            let rateLimited = false;
 
             for (const symbol of SYMBOLS) {
               const url = `${FMP_BASE_URL}/quote?symbol=${symbol}&apikey=${fmpApiKey}`;
               console.log(`[API Proxy] Fetching: ${url.replace(fmpApiKey, '***')}`);
 
               const response = await fetch(url);
+
+              if (response.status === 429) {
+                rateLimited = true;
+                console.warn(`[API Proxy] Rate limit reached for ${symbol}, stopping batch.`);
+                break;
+              }
 
               if (!response.ok) {
                 const errorText = await response.text();
@@ -132,6 +140,13 @@ export function apiProxy(): Plugin {
             }
 
             if (results.length === 0) {
+              if (rateLimited && cachedTicker.data.length > 0) {
+                console.warn('[API Proxy] Serving cached ticker data due to rate limiting');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(cachedTicker.data));
+                return;
+              }
+
               console.warn('[API Proxy] API failed for all symbols, returning mock data');
               const mockData = [
                 { symbol: 'SPY', price: 595.00, change: 1.50, changesPercentage: 0.25 },
@@ -254,7 +269,7 @@ export function apiProxy(): Plugin {
           console.log('[API Proxy] Gemini API response received');
           
           // 提取响应文本
-          const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          const text = (result as any)?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!text) {
             console.error('[API Proxy] No text in Gemini response:', JSON.stringify(result, null, 2));
             throw new Error("No response from Gemini");
