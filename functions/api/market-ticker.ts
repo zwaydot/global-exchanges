@@ -1,3 +1,15 @@
+interface TickerResult {
+  symbol: string;
+  price: number;
+  change: number;
+  changesPercentage: number;
+}
+
+let cachedTickerData: { timestamp: number; data: TickerResult[] } = {
+  timestamp: 0,
+  data: []
+};
+
 export const onRequest: PagesFunction = async (context) => {
   // Handle CORS
   if (context.request.method === 'OPTIONS') {
@@ -29,10 +41,22 @@ export const onRequest: PagesFunction = async (context) => {
     }
 
     // 仅使用免费 plan 白名单中最核心的指数/龙头
+    const now = Date.now();
+    if (now - cachedTickerData.timestamp < 60_000 && cachedTickerData.data.length > 0) {
+      return new Response(JSON.stringify(cachedTickerData.data), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=30'
+        },
+      });
+    }
+
     const SYMBOLS = ['SPY', 'QQQ', 'SPYG', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'XOM'];
     const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
 
-    const results = [];
+    const results: TickerResult[] = [];
     
     for (const symbol of SYMBOLS) {
       try {
@@ -48,12 +72,14 @@ export const onRequest: PagesFunction = async (context) => {
           continue;
         }
 
-        results.push({
+        const formatted: TickerResult = {
           symbol: item.symbol,
           price: item.price,
           change: item.change,
           changesPercentage: item.changesPercentage || item.changePercentage || 0
-        });
+        };
+
+        results.push(formatted);
       } catch (err) {
         console.error(`[Market Ticker API] Error fetching ${symbol}:`, err);
       }
@@ -63,8 +89,21 @@ export const onRequest: PagesFunction = async (context) => {
     }
 
     if (results.length === 0) {
+      if (cachedTickerData.data.length > 0) {
+        console.warn('[Market Ticker API] Using cached ticker data due to fetch failures');
+        return new Response(JSON.stringify(cachedTickerData.data), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=30'
+          },
+        });
+      }
       throw new Error('No market data fetched');
     }
+
+    cachedTickerData = { timestamp: now, data: results };
 
     return new Response(JSON.stringify(results), {
       status: 200,
