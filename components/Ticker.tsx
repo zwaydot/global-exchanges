@@ -5,20 +5,19 @@ const Ticker: React.FC = () => {
   const [data, setData] = useState<MarketTickerData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fallback data in case API fails (Approximate values)
+  // Fallback data in case API fails (Updated: 2025-01-21)
+  // 注意：市场数据实时变化，此数据仅作为API失败时的备用，实际应通过API获取最新数据
   const fallbackData: MarketTickerData[] = [
-    { symbol: 'SPY', price: 595.10, change: 1.48, changesPercentage: 0.25 },
-    { symbol: 'QQQ', price: 505.02, change: 2.04, changesPercentage: 0.40 },
-    { symbol: 'SPYG', price: 86.42, change: 0.27, changesPercentage: 0.31 },
-    { symbol: 'VWO', price: 44.73, change: -0.05, changesPercentage: -0.11 },
-    { symbol: 'AAPL', price: 230.08, change: 1.00, changesPercentage: 0.44 },
-    { symbol: 'MSFT', price: 421.35, change: 1.60, changesPercentage: 0.38 },
-    { symbol: 'NVDA', price: 142.66, change: 1.52, changesPercentage: 1.08 },
-    { symbol: 'GOOGL', price: 178.84, change: 0.82, changesPercentage: 0.46 },
-    { symbol: 'AMZN', price: 202.74, change: 1.24, changesPercentage: 0.62 },
-    { symbol: 'META', price: 575.31, change: 3.28, changesPercentage: 0.57 },
-    { symbol: 'JPM', price: 240.92, change: 0.45, changesPercentage: 0.19 },
-    { symbol: 'XOM', price: 118.24, change: -0.33, changesPercentage: -0.28 }
+    { symbol: 'SPY', price: 652.53, change: -9.92, changesPercentage: -1.52 },
+    { symbol: 'QQQ', price: 585.67, change: -13.88, changesPercentage: -2.37 },
+    { symbol: 'VWO', price: 52.67, change: -0.61, changesPercentage: -1.14 },
+    { symbol: 'AAPL', price: 268.14, change: 1.89, changesPercentage: 0.71 },
+    { symbol: 'MSFT', price: 472.13, change: -6.30, changesPercentage: -1.32 },
+    { symbol: 'NVDA', price: 177.30, change: -3.34, changesPercentage: -1.85 },
+    { symbol: 'GOOGL', price: 298.13, change: 8.68, changesPercentage: 2.99 },
+    { symbol: 'AMZN', price: 217.10, change: -0.04, changesPercentage: -0.02 },
+    { symbol: 'META', price: 587.27, change: -1.88, changesPercentage: -0.32 },
+    { symbol: 'TSLA', price: 394.60, change: -0.63, changesPercentage: -0.16 }
   ];
 
   useEffect(() => {

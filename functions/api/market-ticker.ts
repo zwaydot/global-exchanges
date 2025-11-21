@@ -94,7 +94,7 @@ export const onRequest: PagesFunction = async (context) => {
       });
     }
 
-    const SYMBOLS = ['SPY', 'QQQ', 'SPYG', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'XOM'];
+    const SYMBOLS = ['SPY', 'QQQ', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA'];
     const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
 
     const results: TickerResult[] = [];
