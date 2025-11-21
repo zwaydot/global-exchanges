@@ -7,17 +7,18 @@ const Ticker: React.FC = () => {
 
   // Fallback data in case API fails (Approximate values)
   const fallbackData: MarketTickerData[] = [
-    { symbol: 'SPY', price: 595.40, change: 1.20, changesPercentage: 0.20 },
-    { symbol: 'QQQ', price: 505.10, change: 2.50, changesPercentage: 0.50 },
-    { symbol: 'AAPL', price: 231.50, change: 1.10, changesPercentage: 0.48 },
-    { symbol: 'MSFT', price: 420.00, change: -1.50, changesPercentage: -0.36 },
-    { symbol: 'NVDA', price: 142.50, change: 2.10, changesPercentage: 1.50 },
-    { symbol: 'GOOGL', price: 178.20, change: 0.80, changesPercentage: 0.45 },
-    { symbol: 'AMZN', price: 202.10, change: 1.20, changesPercentage: 0.60 },
-    { symbol: 'META', price: 575.00, change: 3.50, changesPercentage: 0.61 },
-    { symbol: 'TSLA', price: 325.00, change: 5.00, changesPercentage: 1.56 },
-    { symbol: 'JPM', price: 240.00, change: 0.50, changesPercentage: 0.21 },
-    { symbol: 'XOM', price: 118.00, change: -0.40, changesPercentage: -0.34 }
+    { symbol: 'SPY', price: 595.10, change: 1.48, changesPercentage: 0.25 },
+    { symbol: 'QQQ', price: 505.02, change: 2.04, changesPercentage: 0.40 },
+    { symbol: 'SPYG', price: 86.42, change: 0.27, changesPercentage: 0.31 },
+    { symbol: 'VWO', price: 44.73, change: -0.05, changesPercentage: -0.11 },
+    { symbol: 'AAPL', price: 230.08, change: 1.00, changesPercentage: 0.44 },
+    { symbol: 'MSFT', price: 421.35, change: 1.60, changesPercentage: 0.38 },
+    { symbol: 'NVDA', price: 142.66, change: 1.52, changesPercentage: 1.08 },
+    { symbol: 'GOOGL', price: 178.84, change: 0.82, changesPercentage: 0.46 },
+    { symbol: 'AMZN', price: 202.74, change: 1.24, changesPercentage: 0.62 },
+    { symbol: 'META', price: 575.31, change: 3.28, changesPercentage: 0.57 },
+    { symbol: 'JPM', price: 240.92, change: 0.45, changesPercentage: 0.19 },
+    { symbol: 'XOM', price: 118.24, change: -0.33, changesPercentage: -0.28 }
   ];
 
   useEffect(() => {
