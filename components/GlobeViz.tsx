@@ -167,7 +167,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       lng: node.lLng,
       text: node.id.toUpperCase(),
       size: 1.1, 
-      color: 'rgba(255, 255, 255, 0.9)',
+      color: 'rgba(178, 231, 194, 0.95)', // 琥珀到青色的混合色，模拟标题"Global"的渐变效果 (amber-200 + cyan-300)
       exchangeData: node // Attach original data for click handling
     }));
   }, [exchanges]);

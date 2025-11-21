@@ -46,10 +46,104 @@ export function apiProxy(): Plugin {
         console.log(`[API Proxy] ✓ API Key loaded (length: ${finalApiKey.length})`);
       }
 
-      // 注册中间件，处理 /api/exchange-details 请求
-      // 使用 use 而不是 use('/path') 以确保正确匹配
+      // 加载 FMP API Key
+      let fmpApiKey = env.FMP_API_KEY || process.env.FMP_API_KEY;
+      if (!fmpApiKey) {
+        try {
+          // 尝试从 .dev.vars 读取 (Cloudflare Wrangler format)
+          const devVarsPath = resolve(process.cwd(), '.dev.vars');
+          if (existsSync(devVarsPath)) {
+            const devVarsContent = readFileSync(devVarsPath, 'utf-8');
+            const match = devVarsContent.match(/FMP_API_KEY=(.+)/);
+            if (match) {
+              fmpApiKey = match[1].trim();
+              console.log('[API Proxy] Loaded FMP API key from .dev.vars file');
+            }
+          }
+        } catch (e) {
+          console.error('[API Proxy] Error reading .dev.vars file:', e);
+        }
+      }
+
+      if (fmpApiKey) {
+        console.log(`[API Proxy] ✓ FMP API Key loaded (length: ${fmpApiKey.length})`);
+      } else {
+        console.warn('[API Proxy] ⚠️ FMP_API_KEY not found! Market ticker will fail locally.');
+      }
+
+      // 注册中间件，处理 API 请求
       server.middlewares.use(async (req, res, next) => {
-        // 只处理 /api/exchange-details 路径
+        // 处理 /api/market-ticker 请求
+        if (req.url?.startsWith('/api/market-ticker')) {
+          console.log(`[API Proxy] Received ${req.method} request to ${req.url}`);
+          
+          if (req.method !== 'GET') {
+            return next();
+          }
+
+          try {
+            if (!fmpApiKey) {
+              console.error('[API Proxy] FMP_API_KEY not configured');
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'FMP_API_KEY not configured' }));
+              return;
+            }
+
+            const SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA', 'JPM', 'XOM'];
+            const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
+
+            const results: any[] = [];
+
+            for (const symbol of SYMBOLS) {
+              const url = `${FMP_BASE_URL}/quote?symbol=${symbol}&apikey=${fmpApiKey}`;
+              console.log(`[API Proxy] Fetching: ${url.replace(fmpApiKey, '***')}`);
+
+              const response = await fetch(url);
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`[API Proxy] FMP API error status (${symbol}): ${response.status}`);
+                console.error(`[API Proxy] FMP API error body (${symbol}): ${errorText}`);
+                continue;
+              }
+
+              const data = await response.json();
+              const item = Array.isArray(data) ? data[0] : null;
+              if (!item) continue;
+
+              results.push({
+                symbol: item.symbol,
+                price: item.price,
+                change: item.change,
+                changesPercentage: item.changesPercentage || item.changePercentage || 0
+              });
+            }
+
+            if (results.length === 0) {
+              console.warn('[API Proxy] API failed for all symbols, returning mock data');
+              const mockData = [
+                { symbol: 'SPY', price: 595.00, change: 1.50, changesPercentage: 0.25 },
+                { symbol: 'QQQ', price: 505.00, change: 2.00, changesPercentage: 0.40 },
+                { symbol: 'AAPL', price: 230.00, change: 1.00, changesPercentage: 0.44 }
+              ];
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(mockData));
+              return;
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(results));
+            return;
+
+          } catch (error) {
+            console.error('[API Proxy] Error fetching market ticker:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to fetch market data' }));
+            return;
+          }
+        }
+
+        // 处理 /api/exchange-details 路径
         if (!req.url?.startsWith('/api/exchange-details')) {
           return next();
         }
