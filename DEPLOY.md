@@ -31,9 +31,10 @@
 4. **配置环境变量**
    - 在 "Environment variables" 部分添加：
      - 变量名: `GEMINI_API_KEY`
-     - 值: `AIzaSyCoPCzFWQZ8-MS3K_KlNMXz7WEQhRpJkAE`（你的 Gemini API Key）
+     - 值: 你的 Gemini API Key（从 https://aistudio.google.com/app/apikey 获取）
    - 确保同时为 "Production" 和 "Preview" 环境设置
    - ⚠️ **重要**: 环境变量会在部署后生效，请确保正确设置
+   - ⚠️ **安全提示**: 不要在代码仓库中提交真实的 API key
 
 5. **保存并部署**
    - 点击 "Save and Deploy"
@@ -65,7 +66,7 @@
    ```bash
    pnpm wrangler pages secret put GEMINI_API_KEY
    ```
-   然后输入你的 Gemini API Key: `AIzaSyCoPCzFWQZ8-MS3K_KlNMXz7WEQhRpJkAE`
+   然后输入你的 Gemini API Key（从 https://aistudio.google.com/app/apikey 获取）
 
 ## 项目结构说明
 
