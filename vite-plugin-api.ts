@@ -3,6 +3,8 @@ import { loadEnv } from 'vite';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
+let cachedTicker: { timestamp: number; data: any[] } = { timestamp: 0, data: [] };
+
 /**
  * Vite 插件：在本地开发时模拟 Cloudflare Functions API
  * 这样可以使用 pnpm dev 进行本地开发，而不需要 wrangler
@@ -92,6 +94,13 @@ export function apiProxy(): Plugin {
             const SYMBOLS = ['SPY', 'QQQ', 'SPYG', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'XOM'];
             const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
 
+            const now = Date.now();
+            if (cachedTicker.timestamp && now - cachedTicker.timestamp < 60_000 && cachedTicker.data.length > 0) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(cachedTicker.data));
+              return;
+            }
+
             const results: any[] = [];
 
             for (const symbol of SYMBOLS) {
@@ -133,6 +142,8 @@ export function apiProxy(): Plugin {
               res.end(JSON.stringify(mockData));
               return;
             }
+
+            cachedTicker = { timestamp: Date.now(), data: results };
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(results));
