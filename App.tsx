@@ -3,13 +3,18 @@ import GlobeViz from './components/GlobeViz';
 import DetailPanel from './components/DetailPanel';
 import Ticker from './components/Ticker';
 import { STOCK_EXCHANGES } from './constants';
-import { Exchange, ExchangeDetails } from './types';
+import { Exchange, ExchangeDetails, ExchangeStatsMeta, ExchangeStatsSnapshot } from './types';
 import { fetchExchangeDetails } from './services/geminiService';
+import { fetchExchangeStats } from './services/exchangeStatsService';
 
 const App: React.FC = () => {
   const [selectedExchange, setSelectedExchange] = useState<Exchange | null>(null);
   const [details, setDetails] = useState<ExchangeDetails | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [statsByExchange, setStatsByExchange] = useState<Record<string, ExchangeStatsSnapshot | null>>({});
+  const [statsMeta, setStatsMeta] = useState<ExchangeStatsMeta | null>(null);
+  const [statsLoadingExchange, setStatsLoadingExchange] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   // Remove loader manually if window load event fired before React hydration
   useEffect(() => {
@@ -20,6 +25,29 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const loadStatsForExchange = useCallback(async (exchange: Exchange) => {
+    if (statsByExchange[exchange.id]) {
+      setStatsError(null);
+      return;
+    }
+
+    setStatsError(null);
+    setStatsLoadingExchange(exchange.id);
+    try {
+      const response = await fetchExchangeStats(exchange.id);
+      setStatsMeta(response.meta);
+      setStatsByExchange(prev => ({
+        ...prev,
+        [exchange.id]: response.stats ?? null,
+      }));
+    } catch (error) {
+      console.error('Failed to load exchange stats', error);
+      setStatsError('Unable to load latest stats right now.');
+    } finally {
+      setStatsLoadingExchange(current => (current === exchange.id ? null : current));
+    }
+  }, [statsByExchange]);
+
   const handleExchangeSelect = useCallback(async (exchange: Exchange) => {
     // Don't re-fetch if selecting the same one
     if (selectedExchange?.id === exchange.id) return;
@@ -27,6 +55,7 @@ const App: React.FC = () => {
     setSelectedExchange(exchange);
     setDetails(null);
     setIsLoading(true);
+    void loadStatsForExchange(exchange);
 
     try {
       const data = await fetchExchangeDetails(exchange.name);
@@ -36,7 +65,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedExchange]);
+  }, [selectedExchange, loadStatsForExchange]);
 
   const closePanel = () => {
     setSelectedExchange(null);
@@ -93,7 +122,7 @@ const App: React.FC = () => {
             <li key={ex.id} itemProp="hasPart" itemScope itemType="https://schema.org/FinancialService">
               <h4 itemProp="name">{ex.name} ({ex.id.toUpperCase()})</h4>
               <p><strong>Location:</strong> <span itemProp="location">{ex.city}, {ex.country}</span></p>
-              <p><strong>Daily Trading Volume:</strong> ${ex.dailyVolumeBillionUSD} Billion USD</p>
+              <p><strong>Monthly Value Traded:</strong> ${ex.monthlyTradeValueBillionUSD} Billion USD</p>
               <p><strong>Market Capitalization:</strong> ${ex.marketCapTrillionUSD} Trillion USD</p>
               <p><strong>Primary Currency:</strong> <span itemProp="currenciesAccepted">{ex.currency}</span></p>
             </li>
@@ -116,6 +145,10 @@ const App: React.FC = () => {
             exchange={selectedExchange} 
             details={details} 
             isLoading={isLoading}
+            stats={statsByExchange[selectedExchange.id]}
+            statsMeta={statsMeta}
+            statsLoading={statsLoadingExchange === selectedExchange.id && !statsByExchange[selectedExchange.id]}
+            statsError={statsError}
             onClose={closePanel}
           />
         </aside>
