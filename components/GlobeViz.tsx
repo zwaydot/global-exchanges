@@ -45,12 +45,23 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       }
     };
 
+    // Handle Context Menu blocking
+    const handleContextMenu = (e: MouseEvent) => {
+        // We want to allow the browser context menu, but OrbitControls might block it.
+        // Usually OrbitControls only blocks if we are dragging with right click.
+        // If we just want to ensure right-click works on other elements, we can stop propagation if needed
+        // but usually Three.js canvas consumes events.
+        // For now, we attach a passive listener to ensuring we don't preventDefault globally
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu, { passive: true });
     window.addEventListener('mousemove', handleInteraction);
     window.addEventListener('pointerdown', handleInteraction);
 
     if (globeEl.current) {
-      globeEl.current.controls().autoRotate = true;
-      globeEl.current.controls().autoRotateSpeed = 0.6;
+      const controls = globeEl.current.controls();
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.6;
       
       // Responsive initial view
       const isMobile = window.innerWidth < 640;
@@ -62,27 +73,54 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
     return () => {
       window.removeEventListener('mousemove', handleInteraction);
       window.removeEventListener('pointerdown', handleInteraction);
+      document.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, []);
+  }, [onSelect]); // Add onSelect dependency if it changes (though it usually doesn't)
 
   // Format data for rings (pulsating effect for volume)
   const ringsData = useMemo(() => {
+    return exchanges.map(e => {
+      // Calculate logarithmic radius based on volume
+      const rawR = Math.log((e.monthlyTradeValueBillionUSD / 20) + 1) * 3;
+      // Enforce a minimum visibility radius (0.8 degrees) so even small exchanges have a faint ring
+      const maxR = Math.max(rawR, 0.8);
+      
+      return {
+        lat: e.lat,
+        lng: e.lng,
+        maxR, 
+        propagationSpeed: 1.5,
+        repeatPeriod: 800,
+        // Color: Gold/Amber fading out
+        color: (t: number) => `rgba(251, 191, 36, ${1 - t})`, 
+      };
+    });
+  }, [exchanges]);
+
+  // Points Data: Show a dot for ALL exchanges (interactive targets)
+  // This ensures even if label is hidden, the exchange is visible and clickable.
+  const pointsData = useMemo(() => {
     return exchanges.map(e => ({
       lat: e.lat,
       lng: e.lng,
-      // Log scale for visual balance. Divide monthly by 20 to approximate daily magnitude for similar visual scale
-      maxR: Math.log((e.monthlyTradeValueBillionUSD / 20) + 1) * 3, 
-      propagationSpeed: 1.5,
-      repeatPeriod: 800,
-      // Color: Gold/Amber fading out, matching the "glitter" aesthetic
-      color: (t: number) => `rgba(251, 191, 36, ${1 - t})`, 
+      size: 0.4, // Small clickable dot
+      color: e.monthlyTradeValueBillionUSD > 50 ? '#fbbf24' : 'rgba(255, 255, 255, 0.5)', // Gold for big, White-ish for small
+      data: e,
+      label: `${e.name} (${e.id.toUpperCase()})` // Tooltip text
     }));
   }, [exchanges]);
 
-  // Format data for labels with collision detection (Repulsion Logic)
+  // Format data for labels (Text)
+  // Strategy: Only show labels for major exchanges to reduce clutter
   const labelsData = useMemo(() => {
+    // Filter: Only show labels for exchanges with > $50B monthly volume OR strategic ones manually picked if needed
+    // Adjust threshold as needed to clear up Europe
+    const VISIBILITY_THRESHOLD_USD_B = 50;
+
+    const visibleExchanges = exchanges.filter(e => e.monthlyTradeValueBillionUSD > VISIBILITY_THRESHOLD_USD_B);
+
     // 1. Create nodes with mutable position properties
-    const nodes = exchanges.map(e => ({
+    const nodes = visibleExchanges.map(e => ({
       ...e,
       lLat: e.lat,
       lLng: e.lng,
@@ -90,31 +128,26 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       radius: 1.5 + (e.id.length * 0.4) 
     }));
 
-    // 2. Iterative repulsion to separate close labels
+    // 2. Iterative repulsion to separate close labels (Same logic as before)
     const ITERATIONS = 50; 
     const REPULSION_STRENGTH = 0.3;
-    const ANCHOR_STRENGTH = 0.05; // Force pulling label back to its origin
+    const ANCHOR_STRENGTH = 0.05; 
 
     for (let iter = 0; iter < ITERATIONS; iter++) {
-      // Repulsion phase
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const n1 = nodes[i];
           const n2 = nodes[j];
           
-          // Calculate approximate distance on sphere surface
-          // We adjust longitude difference by the cosine of the latitude
           const avgLatRad = (n1.lLat + n2.lLat) / 2 * (Math.PI / 180);
-          const cosLat = Math.max(0.1, Math.cos(avgLatRad)); // Clamp to avoid div/0
+          const cosLat = Math.max(0.1, Math.cos(avgLatRad));
           
           let dLat = n1.lLat - n2.lLat;
           let dLng = n1.lLng - n2.lLng;
 
-          // Simple wrap-around check
           if (dLng > 180) dLng -= 360;
           if (dLng < -180) dLng += 360;
 
-          // Convert longitude diff to "visual degrees"
           const visualDLng = dLng * cosLat;
           
           const distSq = dLat * dLat + visualDLng * visualDLng;
@@ -127,7 +160,6 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
             let dx = visualDLng;
             let dy = dLat;
 
-            // Handle stacked case
             if (dist < 0.01) {
                 dx = (Math.random() - 0.5); 
                 dy = 1.0; 
@@ -136,7 +168,6 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
                 dy /= dist;
             }
 
-            // Apply Repulsion Force
             const moveLng = (dx * overlap * REPULSION_STRENGTH) / cosLat;
             const moveLat = dy * overlap * REPULSION_STRENGTH;
             
@@ -148,8 +179,6 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
         }
       }
       
-      // Attraction Phase (Return to Origin)
-      // Prevents labels from drifting too far from their actual location
       nodes.forEach(n => {
         const latDiff = n.lat - n.lLat;
         let lngDiff = n.lng - n.lLng;
@@ -162,14 +191,13 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       });
     }
 
-    // Return formatted data for Globe
     return nodes.map(node => ({
       lat: node.lLat,
       lng: node.lLng,
       text: node.id.toUpperCase(),
       size: 1.1, 
-      color: 'rgba(178, 231, 194, 0.95)', // 琥珀到青色的混合色，模拟标题"Global"的渐变效果 (amber-200 + cyan-300)
-      exchangeData: node // Attach original data for click handling
+      color: 'rgba(178, 231, 194, 0.95)',
+      exchangeData: node
     }));
   }, [exchanges]);
 
@@ -181,7 +209,6 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
     onSelect(data);
     
     if (globeEl.current) {
-      // Keep altitude slightly higher on mobile focus too
       const isMobile = window.innerWidth < 640;
       globeEl.current.pointOfView({ lat, lng, altitude: isMobile ? 2.0 : 1.5 }, 1000);
     }
@@ -193,46 +220,67 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
       backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
       
-      // Rings (Volume Visualization Base) - Now Gold
+      // Rings (Volume Visualization)
       ringsData={ringsData}
       ringColor="color"
       ringMaxRadius="maxR"
       ringPropagationSpeed="propagationSpeed"
       ringRepeatPeriod="repeatPeriod"
       
-      // Labels (Names)
+      // Points (Interactive Dots for ALL exchanges)
+      pointsData={pointsData}
+      pointLat="lat"
+      pointLng="lng"
+      pointColor="color"
+      pointRadius="size"
+      pointAltitude={0.01}
+      // Use point label as a simple tooltip
+      pointLabel="label" 
+      
+      // Labels (Text for Major Exchanges Only)
       labelsData={labelsData}
       labelLat="lat"
       labelLng="lng"
       labelText="text"
       labelSize="size"
       labelColor="color"
-      labelDotRadius={0} // Hide dot for labels
+      labelDotRadius={0} // Hide the dot built into the label layer, we use pointsLayer for that
       labelAltitude={0.01}
       
-      // Custom Layer: 3D Volume Bars
+      // Custom Layer: 3D Volume Bars (For 3D effect on tilt)
       customLayerData={exchanges}
       customThreeObject={(d: any) => {
         const { monthlyTradeValueBillionUSD } = d as Exchange;
-        const dailyApprox = monthlyTradeValueBillionUSD / 20;
+        // Ensure even small exchanges have a tiny bar
+        const dailyApprox = Math.max(monthlyTradeValueBillionUSD / 20, 0.5); 
         const altitude = Math.sqrt(dailyApprox) * 0.007;
         const radius = 0.4; 
         
         const geometry = new THREE.CylinderGeometry(radius, radius, altitude, 8);
         geometry.translate(0, altitude / 2, 0);
         
-        // Use Gold/Amber Material for the columns
         const material = new THREE.MeshLambertMaterial({ 
-          color: '#fbbf24', // Amber-400/Gold
+          color: '#fbbf24', 
           transparent: true, 
           opacity: 0.9 
         });
         
-        const mesh = new THREE.Mesh(geometry, material);
-        return mesh;
+        return new THREE.Mesh(geometry, material);
       }}
       
       // Interaction
+      // Handle clicks on Points (Small exchanges)
+      onPointClick={(point: any) => {
+        const data = point.data as Exchange;
+        if (data) handleFocus(data.lat, data.lng, data);
+      }}
+      onPointHover={(point: any) => {
+        isHovering.current = !!point;
+        updateRotation();
+        document.body.style.cursor = point ? 'pointer' : 'default';
+      }}
+
+      // Handle clicks on Custom Layer (Bars)
       onCustomLayerHover={(obj: any) => {
         isHovering.current = !!obj;
         updateRotation();
@@ -240,10 +288,10 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       }}
       onCustomLayerClick={(obj: any) => {
         const data = obj.__data as Exchange;
-        if (data) {
-          handleFocus(data.lat, data.lng, data);
-        }
+        if (data) handleFocus(data.lat, data.lng, data);
       }}
+
+      // Handle clicks on Labels (Major exchanges text)
       onLabelHover={(label: any) => {
         isHovering.current = !!label;
         updateRotation();
@@ -251,9 +299,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       }}
       onLabelClick={(label: any) => {
         const data = label.exchangeData;
-        if (data) {
-           handleFocus(data.lat, data.lng, data);
-        }
+        if (data) handleFocus(data.lat, data.lng, data);
       }}
     />
   );
