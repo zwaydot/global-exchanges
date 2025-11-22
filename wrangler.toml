@@ -6,9 +6,6 @@ kv_namespaces = [
   { binding = "MARKET_TICKER_CACHE", id = "f47995f0fdb143a4b76d073f969e5708" }
 ]
 
-[triggers]
-crons = ["0 6 2 * *"]
-
 [env.production]
 name = "global-exchanges"
 kv_namespaces = [
