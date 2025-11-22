@@ -51,7 +51,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
   },
   {
     id: 'tmx',
-    wfeName: 'TMX Group',
+    wfeName: 'TSX', // WFE uses "TSX" as the key
     name: 'Toronto Stock Exchange (TMX)',
     city: 'Toronto',
     country: 'Canada',
@@ -87,7 +87,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
   },
   {
     id: 'bcs',
-    wfeName: 'Bolsa de Comercio de Santiago',
+    wfeName: 'Santiago', // WFE uses "Santiago" as the key
     name: 'Santiago Stock Exchange',
     city: 'Santiago',
     country: 'Chile',
@@ -178,7 +178,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
 
   {
     id: 'deutsche-boerse',
-    wfeName: 'Deutsche Boerse AG',
+    wfeName: 'FWB', // WFE uses "FWB" (Frankfurter Wertpapierbörse) as the key
     name: 'Deutsche Börse',
     city: 'Frankfurt',
     country: 'Germany',
@@ -253,7 +253,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
   { id: 'nasdaq-cph', wfeName: 'NASDAQ OMX Nordic Copenhagen', name: 'Nasdaq Copenhagen', city: 'Copenhagen', country: 'Denmark', lat: 55.676, lng: 12.568, monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.5, listedCompanies: 150, currency: 'DKK' },
   { id: 'nasdaq-hel', wfeName: 'NASDAQ OMX Nordic Helsinki', name: 'Nasdaq Helsinki', city: 'Helsinki', country: 'Finland', lat: 60.169, lng: 24.938, monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.3, listedCompanies: 140, currency: 'EUR' },
   { id: 'nasdaq-ice', wfeName: 'NASDAQ OMX Nordic Iceland', name: 'Nasdaq Iceland', city: 'Reykjavik', country: 'Iceland', lat: 64.146, lng: -21.942, monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.02, listedCompanies: 20, currency: 'ISK' },
-  { id: 'nasdaq-sto', wfeName: 'NASDAQ OMX Nordic Stockholm', name: 'Nasdaq Stockholm', city: 'Stockholm', country: 'Sweden', lat: 59.332, lng: 18.064, monthlyTradeValueBillionUSD: 40, marketCapTrillionUSD: 1.0, listedCompanies: 350, currency: 'SEK' },
+  { id: 'nasdaq-sto', wfeName: 'Stockholm', name: 'Nasdaq Stockholm', city: 'Stockholm', country: 'Sweden', lat: 59.332, lng: 18.064, monthlyTradeValueBillionUSD: 40, marketCapTrillionUSD: 1.0, listedCompanies: 350, currency: 'SEK' },
 
   {
     id: 'vse',
