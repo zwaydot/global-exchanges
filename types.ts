@@ -5,8 +5,9 @@ export interface Exchange {
   country: string;
   lat: number;
   lng: number;
-  dailyVolumeBillionUSD: number; // Approximate daily volume for visualization
+  monthlyTradeValueBillionUSD: number; // Monthly Value of Share Trading (EOB)
   marketCapTrillionUSD: number;
+  listedCompanies: number;
   currency: string;
 }
 

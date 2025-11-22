@@ -45,18 +45,22 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ exchange, details, isLoading,
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Daily Vol (Est.)</p>
-            <p className="text-lg font-semibold text-amber-300">${exchange.dailyVolumeBillionUSD}B</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Monthly Value (Est.)</p>
+            <p className="text-lg font-semibold text-amber-300">${exchange.monthlyTradeValueBillionUSD}B</p>
           </div>
           <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors">
             <p className="text-xs text-gray-500 uppercase tracking-wider">Market Cap</p>
             <p className="text-lg font-semibold text-blue-300">${exchange.marketCapTrillionUSD}T</p>
           </div>
           <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors">
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Listed Companies</p>
+            <p className="text-lg font-semibold text-purple-300">{exchange.listedCompanies}</p>
+          </div>
+          <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors">
             <p className="text-xs text-gray-500 uppercase tracking-wider">Currency</p>
             <p className="text-lg font-semibold text-emerald-300">{exchange.currency}</p>
           </div>
-          <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors">
+          <div className="col-span-2 bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors">
              <p className="text-xs text-gray-500 uppercase tracking-wider">Trading Hours</p>
              <p className="text-sm font-semibold text-yellow-400">
                {isLoading ? '...' : details?.tradingHours || 'N/A'}
