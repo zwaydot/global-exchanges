@@ -1,19 +1,20 @@
 import { Exchange } from './types';
 
 // Helper to match lib/exchangeStats.ts logic
-// Ensures the ID in constants matches the key in KV
+// Ensures the wfeName matches the key in KV
 function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 // Data source: WFE Focus Market Statistics (Nov 2025 Issue)
 // 88 Exchanges mapped with approximate locations.
-// IDs are normalized WFE names to match KV keys.
+// IDs are short codes for display.
+// wfeName is the full WFE name for data lookup.
 
 export const STOCK_EXCHANGES: Exchange[] = [
   // --- AMERICAS ---
   {
-    id: normalize('NYSE'),
+    id: 'nyse',
     wfeName: 'NYSE',
     name: 'New York Stock Exchange',
     city: 'New York',
@@ -22,7 +23,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 2450, marketCapTrillionUSD: 29.5, listedCompanies: 2385, currency: 'USD'
   },
   {
-    id: normalize('Nasdaq - US'),
+    id: 'nasdaq',
     wfeName: 'Nasdaq - US',
     name: 'Nasdaq',
     city: 'New York',
@@ -31,7 +32,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 3120, marketCapTrillionUSD: 27.8, listedCompanies: 3650, currency: 'USD'
   },
   {
-    id: normalize('Cboe Global Markets'),
+    id: 'cboe',
     wfeName: 'Cboe Global Markets',
     name: 'Cboe Global Markets',
     city: 'Chicago',
@@ -40,7 +41,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 800, marketCapTrillionUSD: 0.1, listedCompanies: 15, currency: 'USD'
   },
   {
-    id: normalize('MIAX Exchange Group'),
+    id: 'miax',
     wfeName: 'MIAX Exchange Group',
     name: 'MIAX Exchange Group',
     city: 'Princeton',
@@ -49,7 +50,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 150, marketCapTrillionUSD: 0, listedCompanies: 0, currency: 'USD'
   },
   {
-    id: normalize('TMX Group'),
+    id: 'tmx',
     wfeName: 'TMX Group',
     name: 'Toronto Stock Exchange (TMX)',
     city: 'Toronto',
@@ -58,7 +59,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 185, marketCapTrillionUSD: 3.4, listedCompanies: 1620, currency: 'CAD'
   },
   {
-    id: normalize('Canadian Securities Exchange'),
+    id: 'cse',
     wfeName: 'Canadian Securities Exchange',
     name: 'Canadian Securities Exchange',
     city: 'Toronto',
@@ -67,7 +68,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.1, listedCompanies: 800, currency: 'CAD'
   },
   {
-    id: normalize('B3 - Brasil Bolsa Balcão'),
+    id: 'b3',
     wfeName: 'B3 - Brasil Bolsa Balcão',
     name: 'B3',
     city: 'São Paulo',
@@ -76,7 +77,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 85, marketCapTrillionUSD: 1.1, listedCompanies: 355, currency: 'BRL'
   },
   {
-    id: normalize('Bolsa Mexicana de Valores'),
+    id: 'bmv',
     wfeName: 'Bolsa Mexicana de Valores',
     name: 'Bolsa Mexicana de Valores',
     city: 'Mexico City',
@@ -85,7 +86,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 18, marketCapTrillionUSD: 0.55, listedCompanies: 138, currency: 'MXN'
   },
   {
-    id: normalize('Bolsa de Comercio de Santiago'),
+    id: 'bcs',
     wfeName: 'Bolsa de Comercio de Santiago',
     name: 'Santiago Stock Exchange',
     city: 'Santiago',
@@ -94,7 +95,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 6, marketCapTrillionUSD: 0.22, listedCompanies: 198, currency: 'CLP'
   },
   {
-    id: normalize('Bolsa Electronica de Chile'),
+    id: 'bec',
     wfeName: 'Bolsa Electronica de Chile',
     name: 'Bolsa Electrónica de Chile',
     city: 'Santiago',
@@ -103,7 +104,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 2, marketCapTrillionUSD: 0.05, listedCompanies: 50, currency: 'CLP'
   },
   {
-    id: normalize('Bolsa de Valores de Colombia'),
+    id: 'bvc',
     wfeName: 'Bolsa de Valores de Colombia',
     name: 'Bolsa de Valores de Colombia',
     city: 'Bogotá',
@@ -112,7 +113,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 5, marketCapTrillionUSD: 0.08, listedCompanies: 65, currency: 'COP'
   },
   {
-    id: normalize('Bolsa de Valores de Lima'),
+    id: 'bvl',
     wfeName: 'Bolsa de Valores de Lima',
     name: 'Bolsa de Valores de Lima',
     city: 'Lima',
@@ -121,7 +122,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 3, marketCapTrillionUSD: 0.05, listedCompanies: 200, currency: 'PEN'
   },
   {
-    id: normalize('Bolsa Latinoamericana de Valores (Latinex)'),
+    id: 'latinex',
     wfeName: 'Bolsa Latinoamericana de Valores (Latinex)',
     name: 'Latinex',
     city: 'Panama City',
@@ -130,7 +131,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.02, listedCompanies: 40, currency: 'PAB'
   },
   {
-    id: normalize('Bolsa Nacional de Valores de Costa Rica'),
+    id: 'bnv',
     wfeName: 'Bolsa Nacional de Valores de Costa Rica',
     name: 'Bolsa Nacional de Valores',
     city: 'San José',
@@ -139,7 +140,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.01, listedCompanies: 20, currency: 'CRC'
   },
   {
-    id: normalize('Jamaica Stock Exchange'),
+    id: 'jse-jam',
     wfeName: 'Jamaica Stock Exchange',
     name: 'Jamaica Stock Exchange',
     city: 'Kingston',
@@ -148,7 +149,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.5, marketCapTrillionUSD: 0.01, listedCompanies: 100, currency: 'JMD'
   },
   {
-    id: normalize('Bermuda Stock Exchange'),
+    id: 'bsx',
     wfeName: 'Bermuda Stock Exchange',
     name: 'Bermuda Stock Exchange',
     city: 'Hamilton',
@@ -159,7 +160,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
 
   // --- EMEA (Europe, Middle East, Africa) ---
   {
-    id: normalize('Euronext'),
+    id: 'euronext',
     wfeName: 'Euronext',
     name: 'Euronext',
     city: 'Amsterdam',
@@ -168,15 +169,15 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 285, marketCapTrillionUSD: 7.1, listedCompanies: 1920, currency: 'EUR'
   },
   // Euronext individual markets (Coords approximated to local exchanges)
-  { id: normalize('Euronext Amsterdam'), wfeName: 'Euronext Amsterdam', name: 'Euronext Amsterdam', city: 'Amsterdam', country: 'Netherlands', lat: 52.365, lng: 4.885, monthlyTradeValueBillionUSD: 50, marketCapTrillionUSD: 1.5, listedCompanies: 130, currency: 'EUR' },
-  { id: normalize('Euronext Brussels'), wfeName: 'Euronext Brussels', name: 'Euronext Brussels', city: 'Brussels', country: 'Belgium', lat: 50.850, lng: 4.351, monthlyTradeValueBillionUSD: 30, marketCapTrillionUSD: 0.5, listedCompanies: 120, currency: 'EUR' },
-  { id: normalize('Euronext Dublin'), wfeName: 'Euronext Dublin', name: 'Euronext Dublin', city: 'Dublin', country: 'Ireland', lat: 53.349, lng: -6.260, monthlyTradeValueBillionUSD: 20, marketCapTrillionUSD: 0.2, listedCompanies: 50, currency: 'EUR' },
-  { id: normalize('Euronext Oslo'), wfeName: 'Euronext Oslo', name: 'Euronext Oslo', city: 'Oslo', country: 'Norway', lat: 59.913, lng: 10.752, monthlyTradeValueBillionUSD: 40, marketCapTrillionUSD: 0.4, listedCompanies: 300, currency: 'NOK' },
-  { id: normalize('Euronext Paris'), wfeName: 'Euronext Paris', name: 'Euronext Paris', city: 'Paris', country: 'France', lat: 48.856, lng: 2.352, monthlyTradeValueBillionUSD: 100, marketCapTrillionUSD: 3.5, listedCompanies: 800, currency: 'EUR' },
+  { id: 'enx-ams', wfeName: 'Euronext Amsterdam', name: 'Euronext Amsterdam', city: 'Amsterdam', country: 'Netherlands', lat: 52.365, lng: 4.885, monthlyTradeValueBillionUSD: 50, marketCapTrillionUSD: 1.5, listedCompanies: 130, currency: 'EUR' },
+  { id: 'enx-bru', wfeName: 'Euronext Brussels', name: 'Euronext Brussels', city: 'Brussels', country: 'Belgium', lat: 50.850, lng: 4.351, monthlyTradeValueBillionUSD: 30, marketCapTrillionUSD: 0.5, listedCompanies: 120, currency: 'EUR' },
+  { id: 'enx-dub', wfeName: 'Euronext Dublin', name: 'Euronext Dublin', city: 'Dublin', country: 'Ireland', lat: 53.349, lng: -6.260, monthlyTradeValueBillionUSD: 20, marketCapTrillionUSD: 0.2, listedCompanies: 50, currency: 'EUR' },
+  { id: 'enx-osl', wfeName: 'Euronext Oslo', name: 'Euronext Oslo', city: 'Oslo', country: 'Norway', lat: 59.913, lng: 10.752, monthlyTradeValueBillionUSD: 40, marketCapTrillionUSD: 0.4, listedCompanies: 300, currency: 'NOK' },
+  { id: 'enx-par', wfeName: 'Euronext Paris', name: 'Euronext Paris', city: 'Paris', country: 'France', lat: 48.856, lng: 2.352, monthlyTradeValueBillionUSD: 100, marketCapTrillionUSD: 3.5, listedCompanies: 800, currency: 'EUR' },
   // Note: Euronext Lisbon skipped in WFE list or merged? Added if found later.
 
   {
-    id: normalize('Deutsche Boerse AG'),
+    id: 'deutsche-boerse',
     wfeName: 'Deutsche Boerse AG',
     name: 'Deutsche Börse',
     city: 'Frankfurt',
@@ -185,7 +186,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 135, marketCapTrillionUSD: 2.4, listedCompanies: 480, currency: 'EUR'
   },
   {
-    id: normalize('Boerse Stuttgart'),
+    id: 'boerse-stuttgart',
     wfeName: 'Boerse Stuttgart',
     name: 'Börse Stuttgart',
     city: 'Stuttgart',
@@ -194,7 +195,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.1, listedCompanies: 100, currency: 'EUR'
   },
   {
-    id: normalize('SIX Swiss Exchange'),
+    id: 'six',
     wfeName: 'SIX Swiss Exchange',
     name: 'SIX Swiss Exchange',
     city: 'Zurich',
@@ -203,7 +204,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 110, marketCapTrillionUSD: 2.1, listedCompanies: 245, currency: 'CHF'
   },
   {
-    id: normalize('BME Spanish Exchanges'),
+    id: 'bme',
     wfeName: 'BME Spanish Exchanges',
     name: 'BME Spanish Exchanges',
     city: 'Madrid',
@@ -212,7 +213,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 40, marketCapTrillionUSD: 0.7, listedCompanies: 250, currency: 'EUR'
   },
   {
-    id: normalize('Borsa Italiana'),
+    id: 'borsa-italiana',
     wfeName: 'Borsa Italiana',
     name: 'Borsa Italiana',
     city: 'Milan',
@@ -221,7 +222,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 60, marketCapTrillionUSD: 0.8, listedCompanies: 400, currency: 'EUR'
   },
   {
-    id: normalize('Cboe Europe'),
+    id: 'cboe-eu',
     wfeName: 'Cboe Europe',
     name: 'Cboe Europe',
     city: 'London',
@@ -229,20 +230,8 @@ export const STOCK_EXCHANGES: Exchange[] = [
     lat: 51.513, lng: -0.088,
     monthlyTradeValueBillionUSD: 150, marketCapTrillionUSD: 0, listedCompanies: 0, currency: 'GBP'
   },
-  // LSE Group not explicitly in WFE top list as "LSE"? WFE sometimes lists as "London Stock Exchange Group" or just LSE. 
-  // Wait, node output didn't show "London Stock Exchange". Checking... 
-  // Ah, it wasn't in the grep output, likely due to row parsing. 
-  // Based on typical WFE data, we assume it exists or is part of a group. 
-  // I will add it using "LSEG" or "London Stock Exchange" hoping it matches partial key logic if I kept it.
-  // BUT since I switched to exact key, I must use exact WFE string.
-  // Looking at the dump again... "London Stock Exchange" WAS MISSING in the node output?
-  // Let me double check the provided partial node output...
-  // It had "Lusaka", "Luxembourg". No "London".
-  // Maybe it's under "LSEG"? Or "FTSE"?
-  // It is highly unlikely WFE excludes LSE. It might be missing from the small sample or I missed it.
-  // I'll add "London Stock Exchange" with a note. If it's missing in KV, it will use fallback.
   {
-    id: normalize('London Stock Exchange'),
+    id: 'lse',
     wfeName: 'London Stock Exchange',
     name: 'London Stock Exchange',
     city: 'London',
@@ -252,7 +241,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
   },
 
   {
-    id: normalize('Nasdaq Nordic and Baltics'),
+    id: 'nasdaq-nordic',
     wfeName: 'Nasdaq Nordic and Baltics',
     name: 'Nasdaq Nordic & Baltics',
     city: 'Stockholm',
@@ -261,13 +250,13 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 65, marketCapTrillionUSD: 1.9, listedCompanies: 820, currency: 'SEK'
   },
   // Specific Nordic exchanges
-  { id: normalize('NASDAQ OMX Nordic Copenhagen'), wfeName: 'NASDAQ OMX Nordic Copenhagen', name: 'Nasdaq Copenhagen', city: 'Copenhagen', country: 'Denmark', lat: 55.676, lng: 12.568, monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.5, listedCompanies: 150, currency: 'DKK' },
-  { id: normalize('NASDAQ OMX Nordic Helsinki'), wfeName: 'NASDAQ OMX Nordic Helsinki', name: 'Nasdaq Helsinki', city: 'Helsinki', country: 'Finland', lat: 60.169, lng: 24.938, monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.3, listedCompanies: 140, currency: 'EUR' },
-  { id: normalize('NASDAQ OMX Nordic Iceland'), wfeName: 'NASDAQ OMX Nordic Iceland', name: 'Nasdaq Iceland', city: 'Reykjavik', country: 'Iceland', lat: 64.146, lng: -21.942, monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.02, listedCompanies: 20, currency: 'ISK' },
-  { id: normalize('NASDAQ OMX Nordic Stockholm'), wfeName: 'NASDAQ OMX Nordic Stockholm', name: 'Nasdaq Stockholm', city: 'Stockholm', country: 'Sweden', lat: 59.332, lng: 18.064, monthlyTradeValueBillionUSD: 40, marketCapTrillionUSD: 1.0, listedCompanies: 350, currency: 'SEK' },
+  { id: 'nasdaq-cph', wfeName: 'NASDAQ OMX Nordic Copenhagen', name: 'Nasdaq Copenhagen', city: 'Copenhagen', country: 'Denmark', lat: 55.676, lng: 12.568, monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.5, listedCompanies: 150, currency: 'DKK' },
+  { id: 'nasdaq-hel', wfeName: 'NASDAQ OMX Nordic Helsinki', name: 'Nasdaq Helsinki', city: 'Helsinki', country: 'Finland', lat: 60.169, lng: 24.938, monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.3, listedCompanies: 140, currency: 'EUR' },
+  { id: 'nasdaq-ice', wfeName: 'NASDAQ OMX Nordic Iceland', name: 'Nasdaq Iceland', city: 'Reykjavik', country: 'Iceland', lat: 64.146, lng: -21.942, monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.02, listedCompanies: 20, currency: 'ISK' },
+  { id: 'nasdaq-sto', wfeName: 'NASDAQ OMX Nordic Stockholm', name: 'Nasdaq Stockholm', city: 'Stockholm', country: 'Sweden', lat: 59.332, lng: 18.064, monthlyTradeValueBillionUSD: 40, marketCapTrillionUSD: 1.0, listedCompanies: 350, currency: 'SEK' },
 
   {
-    id: normalize('Vienna Stock Exchange'),
+    id: 'vse',
     wfeName: 'Vienna Stock Exchange',
     name: 'Vienna Stock Exchange',
     city: 'Vienna',
@@ -276,7 +265,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 5, marketCapTrillionUSD: 0.15, listedCompanies: 80, currency: 'EUR'
   },
   {
-    id: normalize('Prague Stock Exchange'),
+    id: 'pse',
     wfeName: 'Prague Stock Exchange',
     name: 'Prague Stock Exchange',
     city: 'Prague',
@@ -285,7 +274,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 2, marketCapTrillionUSD: 0.05, listedCompanies: 50, currency: 'CZK'
   },
   {
-    id: normalize('Budapest Stock Exchange'),
+    id: 'bse-hun',
     wfeName: 'Budapest Stock Exchange',
     name: 'Budapest Stock Exchange',
     city: 'Budapest',
@@ -294,7 +283,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.03, listedCompanies: 45, currency: 'HUF'
   },
   {
-    id: normalize('Warsaw Stock Exchange'),
+    id: 'wse',
     wfeName: 'Warsaw Stock Exchange',
     name: 'Warsaw Stock Exchange',
     city: 'Warsaw',
@@ -303,7 +292,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 6, marketCapTrillionUSD: 0.2, listedCompanies: 430, currency: 'PLN'
   },
   {
-    id: normalize('Bucharest Stock Exchange'),
+    id: 'bvb',
     wfeName: 'Bucharest Stock Exchange',
     name: 'Bucharest Stock Exchange',
     city: 'Bucharest',
@@ -312,7 +301,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.5, marketCapTrillionUSD: 0.04, listedCompanies: 85, currency: 'RON'
   },
   {
-    id: normalize('Bulgarian Stock Exchange'),
+    id: 'bse-bul',
     wfeName: 'Bulgarian Stock Exchange',
     name: 'Bulgarian Stock Exchange',
     city: 'Sofia',
@@ -321,7 +310,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 200, currency: 'BGN'
   },
   {
-    id: normalize('Zagreb Stock Exchange'),
+    id: 'zse',
     wfeName: 'Zagreb Stock Exchange',
     name: 'Zagreb Stock Exchange',
     city: 'Zagreb',
@@ -330,7 +319,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.02, listedCompanies: 100, currency: 'EUR'
   },
   {
-    id: normalize('Ljubljana Stock Exchange'),
+    id: 'ljse',
     wfeName: 'Ljubljana Stock Exchange',
     name: 'Ljubljana Stock Exchange',
     city: 'Ljubljana',
@@ -339,7 +328,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 30, currency: 'EUR'
   },
   {
-    id: normalize('Athens Stock Exchange'),
+    id: 'ase',
     wfeName: 'Athens Stock Exchange',
     name: 'Athens Stock Exchange',
     city: 'Athens',
@@ -348,7 +337,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 3, marketCapTrillionUSD: 0.09, listedCompanies: 120, currency: 'EUR'
   },
   {
-    id: normalize('Cyprus Stock Exchange'),
+    id: 'cse-cyp',
     wfeName: 'Cyprus Stock Exchange',
     name: 'Cyprus Stock Exchange',
     city: 'Nicosia',
@@ -357,7 +346,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 60, currency: 'EUR'
   },
   {
-    id: normalize('Malta Stock Exchange'),
+    id: 'mse',
     wfeName: 'Malta Stock Exchange',
     name: 'Malta Stock Exchange',
     city: 'Valletta',
@@ -366,7 +355,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 50, currency: 'EUR'
   },
   {
-    id: normalize('Luxembourg Stock Exchange'),
+    id: 'luxse',
     wfeName: 'Luxembourg Stock Exchange',
     name: 'Luxembourg Stock Exchange',
     city: 'Luxembourg',
@@ -375,7 +364,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.06, listedCompanies: 130, currency: 'EUR'
   },
   {
-    id: normalize('Borsa Istanbul'),
+    id: 'bist',
     wfeName: 'Borsa Istanbul',
     name: 'Borsa Istanbul',
     city: 'Istanbul',
@@ -384,7 +373,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 125, marketCapTrillionUSD: 0.35, listedCompanies: 515, currency: 'TRY'
   },
   {
-    id: normalize('Tel-Aviv Stock Exchange'),
+    id: 'tase',
     wfeName: 'Tel-Aviv Stock Exchange',
     name: 'Tel Aviv Stock Exchange',
     city: 'Tel Aviv',
@@ -393,7 +382,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 18, marketCapTrillionUSD: 0.28, listedCompanies: 460, currency: 'ILS'
   },
   {
-    id: normalize('Palestine Exchange'),
+    id: 'pex',
     wfeName: 'Palestine Exchange',
     name: 'Palestine Exchange',
     city: 'Nablus',
@@ -402,7 +391,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 46, currency: 'USD'
   },
   {
-    id: normalize('Amman Stock Exchange'),
+    id: 'ase-jor',
     wfeName: 'Amman Stock Exchange',
     name: 'Amman Stock Exchange',
     city: 'Amman',
@@ -411,7 +400,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.5, marketCapTrillionUSD: 0.02, listedCompanies: 170, currency: 'JOD'
   },
   {
-    id: normalize('Saudi Exchange (Tadawul)'),
+    id: 'tadawul',
     wfeName: 'Saudi Exchange (Tadawul)',
     name: 'Saudi Exchange (Tadawul)',
     city: 'Riyadh',
@@ -420,7 +409,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 45, marketCapTrillionUSD: 3.1, listedCompanies: 242, currency: 'SAR'
   },
   {
-    id: normalize('Abu Dhabi Securities Exchange'),
+    id: 'adx',
     wfeName: 'Abu Dhabi Securities Exchange',
     name: 'Abu Dhabi Securities Exchange',
     city: 'Abu Dhabi',
@@ -429,7 +418,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 12, marketCapTrillionUSD: 0.95, listedCompanies: 105, currency: 'AED'
   },
   {
-    id: normalize('Dubai Financial Market'),
+    id: 'dfm',
     wfeName: 'Dubai Financial Market',
     name: 'Dubai Financial Market',
     city: 'Dubai',
@@ -438,7 +427,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.17, listedCompanies: 70, currency: 'AED'
   },
   {
-    id: normalize('Bahrain Bourse'),
+    id: 'bhb',
     wfeName: 'Bahrain Bourse',
     name: 'Bahrain Bourse',
     city: 'Manama',
@@ -447,7 +436,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.2, marketCapTrillionUSD: 0.03, listedCompanies: 40, currency: 'BHD'
   },
   {
-    id: normalize('Boursa Kuwait'),
+    id: 'bk',
     wfeName: 'Boursa Kuwait',
     name: 'Boursa Kuwait',
     city: 'Kuwait City',
@@ -456,7 +445,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 4, marketCapTrillionUSD: 0.13, listedCompanies: 150, currency: 'KWD'
   },
   {
-    id: normalize('Qatar Stock Exchange'),
+    id: 'qse',
     wfeName: 'Qatar Stock Exchange',
     name: 'Qatar Stock Exchange',
     city: 'Doha',
@@ -465,7 +454,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 3, marketCapTrillionUSD: 0.16, listedCompanies: 50, currency: 'QAR'
   },
   {
-    id: normalize('Muscat Stock Exchange'), // Guessing it might be there, if not, it's fine.
+    id: 'msm',
     wfeName: 'Muscat Stock Exchange',
     name: 'Muscat Stock Exchange',
     city: 'Muscat',
@@ -474,7 +463,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.5, marketCapTrillionUSD: 0.06, listedCompanies: 110, currency: 'OMR'
   },
   {
-    id: normalize('Tehran Stock Exchange'),
+    id: 'tse-ir',
     wfeName: 'Tehran Stock Exchange',
     name: 'Tehran Stock Exchange',
     city: 'Tehran',
@@ -483,7 +472,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 5, marketCapTrillionUSD: 0.3, listedCompanies: 700, currency: 'IRR'
   },
   {
-    id: normalize('Iran Fara Bourse Securities Exchange'),
+    id: 'ifb',
     wfeName: 'Iran Fara Bourse Securities Exchange',
     name: 'Iran Fara Bourse',
     city: 'Tehran',
@@ -492,7 +481,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 2, marketCapTrillionUSD: 0.2, listedCompanies: 600, currency: 'IRR'
   },
   {
-    id: normalize('Johannesburg Stock Exchange'),
+    id: 'jse',
     wfeName: 'Johannesburg Stock Exchange',
     name: 'Johannesburg Stock Exchange',
     city: 'Johannesburg',
@@ -501,7 +490,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 28, marketCapTrillionUSD: 1.2, listedCompanies: 310, currency: 'ZAR'
   },
   {
-    id: normalize('Nigerian Exchange'),
+    id: 'ngkk',
     wfeName: 'Nigerian Exchange',
     name: 'Nigerian Exchange',
     city: 'Lagos',
@@ -510,7 +499,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.5, marketCapTrillionUSD: 0.07, listedCompanies: 160, currency: 'NGN'
   },
   {
-    id: normalize('Ghana Stock Exchange'),
+    id: 'gse',
     wfeName: 'Ghana Stock Exchange',
     name: 'Ghana Stock Exchange',
     city: 'Accra',
@@ -519,7 +508,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 40, currency: 'GHS'
   },
   {
-    id: normalize('Nairobi Securities Exchange'),
+    id: 'nse-ke',
     wfeName: 'Nairobi Securities Exchange',
     name: 'Nairobi Securities Exchange',
     city: 'Nairobi',
@@ -528,7 +517,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.2, marketCapTrillionUSD: 0.01, listedCompanies: 65, currency: 'KES'
   },
   {
-    id: normalize('Rwanda Stock Exchange'),
+    id: 'rse',
     wfeName: 'Rwanda Stock Exchange',
     name: 'Rwanda Stock Exchange',
     city: 'Kigali',
@@ -537,7 +526,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.05, marketCapTrillionUSD: 0.005, listedCompanies: 10, currency: 'RWF'
   },
   {
-    id: normalize('Lusaka Securities Exchange'),
+    id: 'luse',
     wfeName: 'Lusaka Securities Exchange',
     name: 'Lusaka Securities Exchange',
     city: 'Lusaka',
@@ -546,7 +535,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.005, listedCompanies: 25, currency: 'ZMW'
   },
   {
-    id: normalize('Stock Exchange of Mauritius'),
+    id: 'sem',
     wfeName: 'Stock Exchange of Mauritius',
     name: 'Stock Exchange of Mauritius',
     city: 'Port Louis',
@@ -555,7 +544,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 100, currency: 'MUR'
   },
   {
-    id: normalize('Bourse de Casablanca'),
+    id: 'casa',
     wfeName: 'Bourse de Casablanca',
     name: 'Casablanca Stock Exchange',
     city: 'Casablanca',
@@ -564,7 +553,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.3, marketCapTrillionUSD: 0.06, listedCompanies: 75, currency: 'MAD'
   },
   {
-    id: normalize('Tunis Stock Exchange'),
+    id: 'bvmt',
     wfeName: 'Tunis Stock Exchange',
     name: 'Tunis Stock Exchange',
     city: 'Tunis',
@@ -573,7 +562,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.008, listedCompanies: 80, currency: 'TND'
   },
   {
-    id: normalize('The Egyptian Exchange'),
+    id: 'egx',
     wfeName: 'The Egyptian Exchange',
     name: 'The Egyptian Exchange',
     city: 'Cairo',
@@ -582,7 +571,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.04, listedCompanies: 220, currency: 'EGP'
   },
   {
-    id: normalize('Baku Stock Exchange'),
+    id: 'bse-az',
     wfeName: 'Baku Stock Exchange',
     name: 'Baku Stock Exchange',
     city: 'Baku',
@@ -591,7 +580,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.005, listedCompanies: 20, currency: 'AZN'
   },
   {
-    id: normalize('Armenia Securities Exchange'),
+    id: 'amx',
     wfeName: 'Armenia Securities Exchange',
     name: 'Armenia Securities Exchange',
     city: 'Yerevan',
@@ -600,7 +589,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.05, marketCapTrillionUSD: 0.002, listedCompanies: 10, currency: 'AMD'
   },
   {
-    id: normalize('Kazakhstan Stock Exchange'),
+    id: 'kase',
     wfeName: 'Kazakhstan Stock Exchange',
     name: 'Kazakhstan Stock Exchange',
     city: 'Almaty',
@@ -609,7 +598,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.5, marketCapTrillionUSD: 0.05, listedCompanies: 140, currency: 'KZT'
   },
   {
-    id: normalize('Astana International Exchange'),
+    id: 'aix',
     wfeName: 'Astana International Exchange',
     name: 'AIX',
     city: 'Astana',
@@ -618,7 +607,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.2, marketCapTrillionUSD: 0.02, listedCompanies: 130, currency: 'USD'
   },
   {
-    id: normalize('Tashkent Stock Exchange'),
+    id: 'uzse',
     wfeName: 'Tashkent Stock Exchange',
     name: 'Tashkent Stock Exchange',
     city: 'Tashkent',
@@ -627,7 +616,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 130, currency: 'UZS'
   },
   {
-    id: normalize('Belarusian Currency and Stock Exchange'),
+    id: 'bcse',
     wfeName: 'Belarusian Currency and Stock Exchange',
     name: 'BCSE',
     city: 'Minsk',
@@ -637,7 +626,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
   },
   // MERJ Exchange (Seychelles)
   {
-    id: normalize('MERJ Exchange Limited'),
+    id: 'merj',
     wfeName: 'MERJ Exchange Limited',
     name: 'MERJ Exchange',
     city: 'Victoria',
@@ -648,7 +637,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
 
   // --- ASIA PACIFIC ---
   {
-    id: normalize('Japan Exchange Group'),
+    id: 'jpx',
     wfeName: 'Japan Exchange Group',
     name: 'Tokyo Stock Exchange (JPX)',
     city: 'Tokyo',
@@ -657,7 +646,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 620, marketCapTrillionUSD: 6.8, listedCompanies: 3950, currency: 'JPY'
   },
   {
-    id: normalize('Shanghai Stock Exchange'),
+    id: 'sse',
     wfeName: 'Shanghai Stock Exchange',
     name: 'Shanghai Stock Exchange',
     city: 'Shanghai',
@@ -666,7 +655,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 980, marketCapTrillionUSD: 7.6, listedCompanies: 2350, currency: 'CNY'
   },
   {
-    id: normalize('Shenzhen Stock Exchange'),
+    id: 'szse',
     wfeName: 'Shenzhen Stock Exchange',
     name: 'Shenzhen Stock Exchange',
     city: 'Shenzhen',
@@ -675,7 +664,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1350, marketCapTrillionUSD: 5.2, listedCompanies: 2980, currency: 'CNY'
   },
   {
-    id: normalize('Hong Kong Exchanges and Clearing'),
+    id: 'hkex',
     wfeName: 'Hong Kong Exchanges and Clearing',
     name: 'Hong Kong Stock Exchange',
     city: 'Hong Kong',
@@ -684,7 +673,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 240, marketCapTrillionUSD: 4.3, listedCompanies: 2650, currency: 'HKD'
   },
   {
-    id: normalize('National Equities Exchange and Quotations'),
+    id: 'neeq',
     wfeName: 'National Equities Exchange and Quotations',
     name: 'NEEQ (Beijing)',
     city: 'Beijing',
@@ -693,7 +682,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 10, marketCapTrillionUSD: 0.3, listedCompanies: 6000, currency: 'CNY'
   },
   {
-    id: normalize('Korea Exchange'),
+    id: 'krx',
     wfeName: 'Korea Exchange',
     name: 'Korea Exchange',
     city: 'Seoul',
@@ -702,7 +691,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 320, marketCapTrillionUSD: 2.1, listedCompanies: 2580, currency: 'KRW'
   },
   {
-    id: normalize('Taiwan Stock Exchange'),
+    id: 'twse',
     wfeName: 'Taiwan Stock Exchange',
     name: 'Taiwan Stock Exchange',
     city: 'Taipei',
@@ -711,7 +700,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 280, marketCapTrillionUSD: 2.3, listedCompanies: 1030, currency: 'TWD'
   },
   {
-    id: normalize('Taipei Exchange'),
+    id: 'tpex',
     wfeName: 'Taipei Exchange',
     name: 'Taipei Exchange (TPEx)',
     city: 'Taipei',
@@ -720,7 +709,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 50, marketCapTrillionUSD: 0.18, listedCompanies: 800, currency: 'TWD'
   },
   {
-    id: normalize('National Stock Exchange of India'),
+    id: 'nse',
     wfeName: 'National Stock Exchange of India',
     name: 'National Stock Exchange',
     city: 'Mumbai',
@@ -729,7 +718,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 350, marketCapTrillionUSD: 5.8, listedCompanies: 2300, currency: 'INR'
   },
   {
-    id: normalize('BSE India Limited'),
+    id: 'bse',
     wfeName: 'BSE India Limited',
     name: 'Bombay Stock Exchange',
     city: 'Mumbai',
@@ -738,7 +727,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 18, marketCapTrillionUSD: 1.9, listedCompanies: 5400, currency: 'INR'
   },
   {
-    id: normalize('Singapore Exchange'),
+    id: 'sgx',
     wfeName: 'Singapore Exchange',
     name: 'Singapore Exchange',
     city: 'Singapore',
@@ -747,7 +736,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 22, marketCapTrillionUSD: 0.65, listedCompanies: 640, currency: 'SGD'
   },
   {
-    id: normalize('Indonesia Stock Exchange'),
+    id: 'idx',
     wfeName: 'Indonesia Stock Exchange',
     name: 'Indonesia Stock Exchange',
     city: 'Jakarta',
@@ -756,7 +745,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 25, marketCapTrillionUSD: 0.75, listedCompanies: 920, currency: 'IDR'
   },
   {
-    id: normalize('The Stock Exchange of Thailand'),
+    id: 'set',
     wfeName: 'The Stock Exchange of Thailand',
     name: 'Stock Exchange of Thailand',
     city: 'Bangkok',
@@ -765,7 +754,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 35, marketCapTrillionUSD: 0.58, listedCompanies: 840, currency: 'THB'
   },
   {
-    id: normalize('Bursa Malaysia'),
+    id: 'bursa',
     wfeName: 'Bursa Malaysia',
     name: 'Bursa Malaysia',
     city: 'Kuala Lumpur',
@@ -774,7 +763,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 12, marketCapTrillionUSD: 0.38, listedCompanies: 1010, currency: 'MYR'
   },
   {
-    id: normalize('Hochiminh Stock Exchange'),
+    id: 'hose',
     wfeName: 'Hochiminh Stock Exchange',
     name: 'Ho Chi Minh Stock Exchange',
     city: 'Ho Chi Minh City',
@@ -783,7 +772,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 16, marketCapTrillionUSD: 0.24, listedCompanies: 410, currency: 'VND'
   },
   {
-    id: normalize('Philippine Stock Exchange'),
+    id: 'pse-ph',
     wfeName: 'Philippine Stock Exchange',
     name: 'Philippine Stock Exchange',
     city: 'Manila',
@@ -792,7 +781,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 5, marketCapTrillionUSD: 0.25, listedCompanies: 280, currency: 'PHP'
   },
   {
-    id: normalize('Dhaka Stock Exchange'),
+    id: 'dse',
     wfeName: 'Dhaka Stock Exchange',
     name: 'Dhaka Stock Exchange',
     city: 'Dhaka',
@@ -801,7 +790,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.05, listedCompanies: 650, currency: 'BDT'
   },
   {
-    id: normalize('Colombo Stock Exchange'),
+    id: 'cse-lk',
     wfeName: 'Colombo Stock Exchange',
     name: 'Colombo Stock Exchange',
     city: 'Colombo',
@@ -810,7 +799,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 0.2, marketCapTrillionUSD: 0.015, listedCompanies: 290, currency: 'LKR'
   },
   {
-    id: normalize('Pakistan Stock Exchange'),
+    id: 'psx',
     wfeName: 'Pakistan Stock Exchange',
     name: 'Pakistan Stock Exchange',
     city: 'Karachi',
@@ -819,7 +808,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 1, marketCapTrillionUSD: 0.03, listedCompanies: 530, currency: 'PKR'
   },
   {
-    id: normalize('ASX Australian Securities Exchange'),
+    id: 'asx',
     wfeName: 'ASX Australian Securities Exchange',
     name: 'ASX',
     city: 'Sydney',
@@ -828,7 +817,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 95, marketCapTrillionUSD: 1.95, listedCompanies: 2150, currency: 'AUD'
   },
   {
-    id: normalize('NZX Limited'),
+    id: 'nzx',
     wfeName: 'NZX Limited',
     name: 'New Zealand Exchange',
     city: 'Wellington',

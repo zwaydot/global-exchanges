@@ -6,6 +6,7 @@ import { STOCK_EXCHANGES } from './constants';
 import { Exchange, ExchangeDetails, ExchangeStatsMeta, ExchangeStatsSnapshot } from './types';
 import { fetchExchangeDetails } from './services/geminiService';
 import { fetchExchangeStats } from './services/exchangeStatsService';
+import { normalizeKey } from './lib/exchangeStats';
 
 const App: React.FC = () => {
   const [selectedExchange, setSelectedExchange] = useState<Exchange | null>(null);
@@ -34,15 +35,29 @@ const App: React.FC = () => {
     setStatsError(null);
     setStatsLoadingExchange(exchange.id);
     try {
-      const response = await fetchExchangeStats(exchange.id);
-      setStatsMeta(response.meta);
+      // Use normalized wfeName for API lookup, fallback to id if wfeName is not set
+      const lookupKey = normalizeKey(exchange.wfeName || exchange.id);
+      console.log('[App] Fetching stats for:', { exchangeId: exchange.id, wfeName: exchange.wfeName, lookupKey });
+      const response = await fetchExchangeStats(lookupKey);
+      console.log('[App] Stats response:', { exchangeId: response.exchangeId, hasStats: !!response.stats, meta: response.meta });
+      // Only set meta if it exists (null means no data available, which is OK)
+      if (response.meta) {
+        setStatsMeta(response.meta);
+      }
       setStatsByExchange(prev => ({
         ...prev,
         [exchange.id]: response.stats ?? null,
       }));
+      // If stats is null, that's OK - we'll use fallback data. Only show error for actual failures.
     } catch (error) {
-      console.error('Failed to load exchange stats', error);
-      setStatsError('Unable to load latest stats right now.');
+      console.error('[App] Failed to load exchange stats', error);
+      // In local development, API endpoints may not be available (Cloudflare Pages Functions)
+      // Don't show error in this case - fallback data will be used
+      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocalDev) {
+        // Only show error in production/staging where API should be available
+        setStatsError('Unable to load latest stats right now.');
+      }
     } finally {
       setStatsLoadingExchange(current => (current === exchange.id ? null : current));
     }
