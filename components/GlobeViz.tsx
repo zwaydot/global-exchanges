@@ -247,22 +247,25 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       labelDotRadius={0} // Hide the dot built into the label layer, we use pointsLayer for that
       labelAltitude={0.01}
       
-      // Custom Layer: 3D Volume Bars (For 3D effect on tilt)
+      // Custom Layer: 3D Beacons (Glowing Light Columns)
       customLayerData={exchanges}
       customThreeObject={(d: any) => {
         const { monthlyTradeValueBillionUSD } = d as Exchange;
         // Ensure even small exchanges have a tiny bar
         const dailyApprox = Math.max(monthlyTradeValueBillionUSD / 20, 0.5); 
         const altitude = Math.sqrt(dailyApprox) * 0.007;
-        const radius = 0.4; 
+        const radius = 0.12; // Thinner for beacon look
         
         const geometry = new THREE.CylinderGeometry(radius, radius, altitude, 8);
         geometry.translate(0, altitude / 2, 0);
         
-        const material = new THREE.MeshLambertMaterial({ 
-          color: '#fbbf24', 
+        // Use Phong material with Emissive for glowing effect
+        const material = new THREE.MeshPhongMaterial({ 
+          color: '#fbbf24',        // Base Gold
+          emissive: '#fbbf24',     // Glow Color
+          emissiveIntensity: 0.8,  // Glow Strength
           transparent: true, 
-          opacity: 0.9 
+          opacity: 0.85
         });
         
         return new THREE.Mesh(geometry, material);
