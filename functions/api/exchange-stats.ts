@@ -11,14 +11,30 @@ export const onRequest: PagesFunction<{ MARKET_TICKER_CACHE: KVNamespace }> = as
   let snapshot = forceRefresh ? null : await getStoredExchangeStats(env.MARKET_TICKER_CACHE);
 
   if (!snapshot || isStale(snapshot)) {
-    snapshot = await refreshExchangeStats(env.MARKET_TICKER_CACHE);
+    try {
+      snapshot = await refreshExchangeStats(env.MARKET_TICKER_CACHE);
+    } catch (error) {
+      console.error('[ExchangeStats API] Failed to refresh stats', error);
+      // If refresh fails, try to use existing snapshot (if any)
+      if (!snapshot) {
+        snapshot = await getStoredExchangeStats(env.MARKET_TICKER_CACHE);
+      }
+    }
   }
 
+  // If still no snapshot, return empty response (not an error - will use fallback data)
   if (!snapshot) {
-    return jsonResponse(
-      { error: 'Failed to load exchange stats' },
-      500,
-    );
+    if (exchangeId) {
+      return jsonResponse({
+        exchangeId,
+        stats: null,
+        meta: null,
+      });
+    }
+    return jsonResponse({
+      meta: null,
+      exchanges: {},
+    });
   }
 
   if (exchangeId) {
