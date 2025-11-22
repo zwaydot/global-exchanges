@@ -1,0 +1,11 @@
+name = "exchange-cron"
+main = "workers/exchange-cron.ts"
+compatibility_date = "2024-01-01"
+
+kv_namespaces = [
+  { binding = "MARKET_TICKER_CACHE", id = "f47995f0fdb143a4b76d073f969e5708" }
+]
+
+[triggers]
+crons = ["0 6 2 * *"]
+
