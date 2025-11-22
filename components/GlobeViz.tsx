@@ -70,7 +70,8 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
     return exchanges.map(e => ({
       lat: e.lat,
       lng: e.lng,
-      maxR: Math.log(e.dailyVolumeBillionUSD + 1) * 3, // Log scale for visual balance
+      // Log scale for visual balance. Divide monthly by 20 to approximate daily magnitude for similar visual scale
+      maxR: Math.log((e.monthlyTradeValueBillionUSD / 20) + 1) * 3, 
       propagationSpeed: 1.5,
       repeatPeriod: 800,
       // Color: Gold/Amber fading out, matching the "glitter" aesthetic
@@ -212,8 +213,9 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       // Custom Layer: 3D Volume Bars
       customLayerData={exchanges}
       customThreeObject={(d: any) => {
-        const { dailyVolumeBillionUSD } = d as Exchange;
-        const altitude = Math.sqrt(dailyVolumeBillionUSD) * 0.007;
+        const { monthlyTradeValueBillionUSD } = d as Exchange;
+        const dailyApprox = monthlyTradeValueBillionUSD / 20;
+        const altitude = Math.sqrt(dailyApprox) * 0.007;
         const radius = 0.4; 
         
         const geometry = new THREE.CylinderGeometry(radius, radius, altitude, 8);
