@@ -25,3 +25,26 @@ export interface GlobePoint {
   name: string;
   data: Exchange;
 }
+
+export interface ListedCompaniesSnapshot {
+  domestic?: number | null;
+  foreign?: number | null;
+  total?: number | null;
+}
+
+export interface ExchangeStatsSnapshot {
+  marketCapUSD?: number | null;
+  marketCapChangeMoM?: number | null;
+  marketCapChangeYoY?: number | null;
+  monthlyTradingValueUSD?: number | null;
+  tradingValueChangeMoM?: number | null;
+  tradingValueChangeYoY?: number | null;
+  listedCompanies?: ListedCompaniesSnapshot | null;
+}
+
+export interface ExchangeStatsMeta {
+  issueSlug: string;
+  issueTitle: string;
+  periodLabel: string;
+  extractedAt: number;
+}
