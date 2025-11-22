@@ -136,6 +136,8 @@ async function parseIssueHtml(html: string) {
   const tradingValueTable = parseMetricTable($, TRADING_VALUE_HEADING);
   const listedCompaniesTable = parseCompaniesTable($);
 
+  console.log(`[ExchangeStats] Found ${marketCapTable.map.size} exchanges in market cap table, ${tradingValueTable.map.size} in trading value table, ${listedCompaniesTable.map.size} in listed companies table`);
+
   const data: Record<string, ExchangeStatEntry> = {};
 
   // 收集所有出现的 key (normalizeKey 后的名字)
@@ -168,15 +170,12 @@ async function parseIssueHtml(html: string) {
       entry.listedCompanies = companiesRow;
     }
 
-    // 只有当至少有一项数据有效时才保存
-    if (
-      entry.marketCapUSD != null ||
-      entry.monthlyTradingValueUSD != null ||
-      entry.listedCompanies
-    ) {
-      data[key] = entry;
-    }
+    // 保存所有出现在表格中的交易所，即使部分数据为空
+    // 这样能确保获取 WFE 上所有真实的交易所数据
+    data[key] = entry;
   }
+
+  console.log(`[ExchangeStats] Parsed ${allKeys.size} unique exchanges, saved ${Object.keys(data).length} total exchanges`);
 
   return {
     slug: slugAttr,
