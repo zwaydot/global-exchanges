@@ -1,12 +1,14 @@
 export interface Exchange {
   id: string;
   name: string;
+  wfeName?: string; // The exact name used in WFE statistics for lookup
   city: string;
   country: string;
   lat: number;
   lng: number;
-  dailyVolumeBillionUSD: number; // Approximate daily volume for visualization
+  monthlyTradeValueBillionUSD: number; // Monthly Value of Share Trading (EOB)
   marketCapTrillionUSD: number;
+  listedCompanies: number;
   currency: string;
 }
 
@@ -23,4 +25,29 @@ export interface GlobePoint {
   color: string;
   name: string;
   data: Exchange;
+}
+
+// Re-export these from lib/exchangeStats if possible, but for now define compatible types
+// to avoid circular dependencies if lib imports types.
+export interface ListedCompaniesSnapshot {
+  domestic?: number | null;
+  foreign?: number | null;
+  total?: number | null;
+}
+
+export interface ExchangeStatsSnapshot {
+  marketCapUSD?: number | null;
+  marketCapChangeMoM?: number | null;
+  marketCapChangeYoY?: number | null;
+  monthlyTradingValueUSD?: number | null;
+  tradingValueChangeMoM?: number | null;
+  tradingValueChangeYoY?: number | null;
+  listedCompanies?: ListedCompaniesSnapshot | null;
+}
+
+export interface ExchangeStatsMeta {
+  issueSlug: string;
+  issueTitle: string;
+  periodLabel: string;
+  extractedAt: number;
 }
