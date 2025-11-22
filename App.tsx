@@ -3,13 +3,33 @@ import GlobeViz from './components/GlobeViz';
 import DetailPanel from './components/DetailPanel';
 import Ticker from './components/Ticker';
 import { STOCK_EXCHANGES } from './constants';
-import { Exchange, ExchangeDetails } from './types';
+import { Exchange, ExchangeDetails, ExchangeStatsMeta, ExchangeStatsSnapshot } from './types';
 import { fetchExchangeDetails } from './services/geminiService';
+import { fetchExchangeStats } from './services/exchangeStatsService';
+import { normalizeKey } from './lib/exchangeStats';
+
+// Parent exchange mapping for fallback lookup
+// If a child exchange (e.g., Euronext Paris) has no data, try parent (e.g., Euronext)
+const PARENT_EXCHANGE_MAP: Record<string, string> = {
+  'euronextamsterdam': 'euronext',
+  'euronextbrussels': 'euronext',
+  'euronextdublin': 'euronext',
+  'euronextoslo': 'euronext',
+  'euronextparis': 'euronext',
+  'nasdaqomxnordiccopenhagen': 'nasdaqnordicandbaltics',
+  'nasdaqomxnordichelsinki': 'nasdaqnordicandbaltics',
+  'nasdaqomxnordiciceland': 'nasdaqnordicandbaltics',
+  'stockholm': 'nasdaqnordicandbaltics',
+};
 
 const App: React.FC = () => {
   const [selectedExchange, setSelectedExchange] = useState<Exchange | null>(null);
   const [details, setDetails] = useState<ExchangeDetails | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [statsByExchange, setStatsByExchange] = useState<Record<string, ExchangeStatsSnapshot | null>>({});
+  const [statsMeta, setStatsMeta] = useState<ExchangeStatsMeta | null>(null);
+  const [statsLoadingExchange, setStatsLoadingExchange] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   // Remove loader manually if window load event fired before React hydration
   useEffect(() => {
@@ -20,6 +40,51 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const loadStatsForExchange = useCallback(async (exchange: Exchange) => {
+    if (statsByExchange[exchange.id]) {
+      setStatsError(null);
+      return;
+    }
+
+    setStatsError(null);
+    setStatsLoadingExchange(exchange.id);
+    try {
+      // Use normalized wfeName for API lookup, fallback to id if wfeName is not set
+      let lookupKey = normalizeKey(exchange.wfeName || exchange.id);
+      let response = await fetchExchangeStats(lookupKey);
+      
+      // If no data found and this is a child exchange, try parent exchange
+      if (!response.stats && PARENT_EXCHANGE_MAP[lookupKey]) {
+        const parentKey = PARENT_EXCHANGE_MAP[lookupKey];
+        const parentResponse = await fetchExchangeStats(parentKey);
+        if (parentResponse.stats) {
+          response = parentResponse;
+        }
+      }
+      
+      // Only set meta if it exists (null means no data available, which is OK)
+      if (response.meta) {
+        setStatsMeta(response.meta);
+      }
+      setStatsByExchange(prev => ({
+        ...prev,
+        [exchange.id]: response.stats ?? null,
+      }));
+      // If stats is null, that's OK - we'll use fallback data. Only show error for actual failures.
+    } catch (error) {
+      console.error('[App] Failed to load exchange stats', error);
+      // In local development, API endpoints may not be available (Cloudflare Pages Functions)
+      // Don't show error in this case - fallback data will be used
+      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocalDev) {
+        // Only show error in production/staging where API should be available
+        setStatsError('Unable to load latest stats right now.');
+      }
+    } finally {
+      setStatsLoadingExchange(current => (current === exchange.id ? null : current));
+    }
+  }, [statsByExchange]);
+
   const handleExchangeSelect = useCallback(async (exchange: Exchange) => {
     // Don't re-fetch if selecting the same one
     if (selectedExchange?.id === exchange.id) return;
@@ -27,6 +92,7 @@ const App: React.FC = () => {
     setSelectedExchange(exchange);
     setDetails(null);
     setIsLoading(true);
+    void loadStatsForExchange(exchange);
 
     try {
       const data = await fetchExchangeDetails(exchange.name);
@@ -36,7 +102,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedExchange]);
+  }, [selectedExchange, loadStatsForExchange]);
 
   const closePanel = () => {
     setSelectedExchange(null);
@@ -93,7 +159,7 @@ const App: React.FC = () => {
             <li key={ex.id} itemProp="hasPart" itemScope itemType="https://schema.org/FinancialService">
               <h4 itemProp="name">{ex.name} ({ex.id.toUpperCase()})</h4>
               <p><strong>Location:</strong> <span itemProp="location">{ex.city}, {ex.country}</span></p>
-              <p><strong>Daily Trading Volume:</strong> ${ex.dailyVolumeBillionUSD} Billion USD</p>
+              <p><strong>Monthly Value Traded:</strong> ${ex.monthlyTradeValueBillionUSD} Billion USD</p>
               <p><strong>Market Capitalization:</strong> ${ex.marketCapTrillionUSD} Trillion USD</p>
               <p><strong>Primary Currency:</strong> <span itemProp="currenciesAccepted">{ex.currency}</span></p>
             </li>
@@ -116,6 +182,10 @@ const App: React.FC = () => {
             exchange={selectedExchange} 
             details={details} 
             isLoading={isLoading}
+            stats={statsByExchange[selectedExchange.id]}
+            statsMeta={statsMeta}
+            statsLoading={statsLoadingExchange === selectedExchange.id && !statsByExchange[selectedExchange.id]}
+            statsError={statsError}
             onClose={closePanel}
           />
         </aside>
