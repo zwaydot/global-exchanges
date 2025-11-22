@@ -51,7 +51,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
   },
   {
     id: 'tmx',
-    wfeName: 'TSX', // WFE uses "TSX" as the key
+    wfeName: 'TMX Group', // WFE uses "TMX Group" as the key
     name: 'Toronto Stock Exchange (TMX)',
     city: 'Toronto',
     country: 'Canada',
@@ -87,7 +87,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
   },
   {
     id: 'bcs',
-    wfeName: 'Santiago', // WFE uses "Santiago" as the key
+    wfeName: 'Bolsa de Comercio de Santiago', // WFE uses full name
     name: 'Santiago Stock Exchange',
     city: 'Santiago',
     country: 'Chile',
@@ -178,7 +178,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
 
   {
     id: 'deutsche-boerse',
-    wfeName: 'FWB', // WFE uses "FWB" (Frankfurter Wertpapierbörse) as the key
+    wfeName: 'Deutsche Boerse AG', // WFE uses full name
     name: 'Deutsche Börse',
     city: 'Frankfurt',
     country: 'Germany',
