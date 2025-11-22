@@ -1,7 +1,7 @@
 import { Exchange } from './types';
 
 // Major global stock exchanges with approximate location and volume stats
-// Volume estimates based on approx 2024/2025 average daily turnover
+// Data based on Market Statistics for late 2025
 export const STOCK_EXCHANGES: Exchange[] = [
   // --- AMERICAS ---
   {
@@ -12,8 +12,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     // Visually offset NYSE slightly South-West to separate from NASDAQ
     lat: 40.5, 
     lng: -74.2,
-    dailyVolumeBillionUSD: 200,
-    marketCapTrillionUSD: 26,
+    monthlyTradeValueBillionUSD: 2450,
+    marketCapTrillionUSD: 29.5,
+    listedCompanies: 2385,
     currency: 'USD'
   },
   {
@@ -24,8 +25,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     // Visually offset NASDAQ slightly North-East to separate from NYSE
     lat: 41.0,
     lng: -73.5,
-    dailyVolumeBillionUSD: 250,
-    marketCapTrillionUSD: 23,
+    monthlyTradeValueBillionUSD: 3120,
+    marketCapTrillionUSD: 27.8,
+    listedCompanies: 3650,
     currency: 'USD'
   },
   {
@@ -35,8 +37,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Canada',
     lat: 43.648,
     lng: -79.379,
-    dailyVolumeBillionUSD: 9,
-    marketCapTrillionUSD: 3.2,
+    monthlyTradeValueBillionUSD: 185,
+    marketCapTrillionUSD: 3.4,
+    listedCompanies: 1620,
     currency: 'CAD'
   },
   {
@@ -46,8 +49,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Brazil',
     lat: -23.550,
     lng: -46.633,
-    dailyVolumeBillionUSD: 4,
-    marketCapTrillionUSD: 0.9,
+    monthlyTradeValueBillionUSD: 85,
+    marketCapTrillionUSD: 1.1,
+    listedCompanies: 355,
     currency: 'BRL'
   },
   {
@@ -57,8 +61,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Mexico',
     lat: 19.432,
     lng: -99.133,
-    dailyVolumeBillionUSD: 1.2,
-    marketCapTrillionUSD: 0.5,
+    monthlyTradeValueBillionUSD: 18,
+    marketCapTrillionUSD: 0.55,
+    listedCompanies: 138,
     currency: 'MXN'
   },
   {
@@ -68,8 +73,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Chile',
     lat: -33.448,
     lng: -70.669,
-    dailyVolumeBillionUSD: 0.8,
-    marketCapTrillionUSD: 0.2,
+    monthlyTradeValueBillionUSD: 6,
+    marketCapTrillionUSD: 0.22,
+    listedCompanies: 198,
     currency: 'CLP'
   },
 
@@ -81,8 +87,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'UK',
     lat: 51.515,
     lng: -0.098,
-    dailyVolumeBillionUSD: 8,
-    marketCapTrillionUSD: 3.6,
+    monthlyTradeValueBillionUSD: 210,
+    marketCapTrillionUSD: 3.7,
+    listedCompanies: 1850,
     currency: 'GBP'
   },
   {
@@ -92,8 +99,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Europe',
     lat: 52.369,
     lng: 4.893,
-    dailyVolumeBillionUSD: 14,
-    marketCapTrillionUSD: 6.8,
+    monthlyTradeValueBillionUSD: 285,
+    marketCapTrillionUSD: 7.1,
+    listedCompanies: 1920,
     currency: 'EUR'
   },
   {
@@ -103,8 +111,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Germany',
     lat: 50.115,
     lng: 8.678,
-    dailyVolumeBillionUSD: 6,
-    marketCapTrillionUSD: 2.3,
+    monthlyTradeValueBillionUSD: 135,
+    marketCapTrillionUSD: 2.4,
+    listedCompanies: 480,
     currency: 'EUR'
   },
   {
@@ -114,8 +123,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Switzerland',
     lat: 47.371,
     lng: 8.526,
-    dailyVolumeBillionUSD: 5,
-    marketCapTrillionUSD: 1.9,
+    monthlyTradeValueBillionUSD: 110,
+    marketCapTrillionUSD: 2.1,
+    listedCompanies: 245,
     currency: 'CHF'
   },
   {
@@ -125,8 +135,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Sweden',
     lat: 59.329,
     lng: 18.068,
-    dailyVolumeBillionUSD: 2.5,
-    marketCapTrillionUSD: 1.8,
+    monthlyTradeValueBillionUSD: 65,
+    marketCapTrillionUSD: 1.9,
+    listedCompanies: 820,
     currency: 'SEK'
   },
   {
@@ -136,8 +147,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Turkey',
     lat: 41.008,
     lng: 28.978,
-    dailyVolumeBillionUSD: 3.5,
-    marketCapTrillionUSD: 0.3,
+    monthlyTradeValueBillionUSD: 125,
+    marketCapTrillionUSD: 0.35,
+    listedCompanies: 515,
     currency: 'TRY'
   },
   {
@@ -147,8 +159,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Israel',
     lat: 32.085,
     lng: 34.781,
-    dailyVolumeBillionUSD: 1.0,
-    marketCapTrillionUSD: 0.25,
+    monthlyTradeValueBillionUSD: 18,
+    marketCapTrillionUSD: 0.28,
+    listedCompanies: 460,
     currency: 'ILS'
   },
   {
@@ -158,8 +171,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Saudi Arabia',
     lat: 24.713,
     lng: 46.675,
-    dailyVolumeBillionUSD: 2,
-    marketCapTrillionUSD: 2.8,
+    monthlyTradeValueBillionUSD: 45,
+    marketCapTrillionUSD: 3.1,
+    listedCompanies: 242,
     currency: 'SAR'
   },
   {
@@ -169,8 +183,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'UAE',
     lat: 24.453,
     lng: 54.377,
-    dailyVolumeBillionUSD: 1.5,
-    marketCapTrillionUSD: 0.8,
+    monthlyTradeValueBillionUSD: 12,
+    marketCapTrillionUSD: 0.95,
+    listedCompanies: 105,
     currency: 'AED'
   },
   {
@@ -180,8 +195,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'South Africa',
     lat: -26.100,
     lng: 28.053,
-    dailyVolumeBillionUSD: 1.5,
-    marketCapTrillionUSD: 1.0,
+    monthlyTradeValueBillionUSD: 28,
+    marketCapTrillionUSD: 1.2,
+    listedCompanies: 310,
     currency: 'ZAR'
   },
 
@@ -193,8 +209,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Japan',
     lat: 35.683,
     lng: 139.775,
-    dailyVolumeBillionUSD: 28,
-    marketCapTrillionUSD: 6.0,
+    monthlyTradeValueBillionUSD: 620,
+    marketCapTrillionUSD: 6.8,
+    listedCompanies: 3950,
     currency: 'JPY'
   },
   {
@@ -204,8 +221,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'China',
     lat: 31.238,
     lng: 121.505,
-    dailyVolumeBillionUSD: 65,
-    marketCapTrillionUSD: 7.2,
+    monthlyTradeValueBillionUSD: 980,
+    marketCapTrillionUSD: 7.6,
+    listedCompanies: 2350,
     currency: 'CNY'
   },
   {
@@ -216,8 +234,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     // Visually offset North to separate from Hong Kong
     lat: 23.5, 
     lng: 114.05,
-    dailyVolumeBillionUSD: 75,
-    marketCapTrillionUSD: 4.5,
+    monthlyTradeValueBillionUSD: 1350,
+    marketCapTrillionUSD: 5.2,
+    listedCompanies: 2980,
     currency: 'CNY'
   },
   {
@@ -227,8 +246,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Hong Kong',
     lat: 22.282,
     lng: 114.158,
-    dailyVolumeBillionUSD: 18,
-    marketCapTrillionUSD: 4.0,
+    monthlyTradeValueBillionUSD: 240,
+    marketCapTrillionUSD: 4.3,
+    listedCompanies: 2650,
     currency: 'HKD'
   },
   {
@@ -238,8 +258,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'South Korea',
     lat: 37.566,
     lng: 126.978,
-    dailyVolumeBillionUSD: 10,
-    marketCapTrillionUSD: 1.8,
+    monthlyTradeValueBillionUSD: 320,
+    marketCapTrillionUSD: 2.1,
+    listedCompanies: 2580,
     currency: 'KRW'
   },
   {
@@ -249,8 +270,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Taiwan',
     lat: 25.033,
     lng: 121.565,
-    dailyVolumeBillionUSD: 9,
-    marketCapTrillionUSD: 1.7,
+    monthlyTradeValueBillionUSD: 280,
+    marketCapTrillionUSD: 2.3,
+    listedCompanies: 1030,
     currency: 'TWD'
   },
   {
@@ -260,8 +282,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'India',
     lat: 19.076,
     lng: 72.877,
-    dailyVolumeBillionUSD: 12,
-    marketCapTrillionUSD: 4.5,
+    monthlyTradeValueBillionUSD: 350,
+    marketCapTrillionUSD: 5.8,
+    listedCompanies: 2300,
     currency: 'INR'
   },
   {
@@ -272,8 +295,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     // Offset South East slightly from NSE to prevent overlap
     lat: 18.8,
     lng: 73.1,
-    dailyVolumeBillionUSD: 0.6,
-    marketCapTrillionUSD: 1.5,
+    monthlyTradeValueBillionUSD: 18,
+    marketCapTrillionUSD: 1.9,
+    listedCompanies: 5400,
     currency: 'INR'
   },
   {
@@ -283,8 +307,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Singapore',
     lat: 1.283,
     lng: 103.850,
-    dailyVolumeBillionUSD: 1.2,
-    marketCapTrillionUSD: 0.6,
+    monthlyTradeValueBillionUSD: 22,
+    marketCapTrillionUSD: 0.65,
+    listedCompanies: 640,
     currency: 'SGD'
   },
   {
@@ -294,8 +319,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Indonesia',
     lat: -6.208,
     lng: 106.845,
-    dailyVolumeBillionUSD: 0.9,
-    marketCapTrillionUSD: 0.6,
+    monthlyTradeValueBillionUSD: 25,
+    marketCapTrillionUSD: 0.75,
+    listedCompanies: 920,
     currency: 'IDR'
   },
   {
@@ -305,8 +331,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Thailand',
     lat: 13.756,
     lng: 100.501,
-    dailyVolumeBillionUSD: 1.5,
-    marketCapTrillionUSD: 0.5,
+    monthlyTradeValueBillionUSD: 35,
+    marketCapTrillionUSD: 0.58,
+    listedCompanies: 840,
     currency: 'THB'
   },
   {
@@ -316,8 +343,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Malaysia',
     lat: 3.139,
     lng: 101.686,
-    dailyVolumeBillionUSD: 0.7,
-    marketCapTrillionUSD: 0.3,
+    monthlyTradeValueBillionUSD: 12,
+    marketCapTrillionUSD: 0.38,
+    listedCompanies: 1010,
     currency: 'MYR'
   },
   {
@@ -327,8 +355,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Vietnam',
     lat: 10.823,
     lng: 106.629,
-    dailyVolumeBillionUSD: 0.8,
-    marketCapTrillionUSD: 0.2,
+    monthlyTradeValueBillionUSD: 16,
+    marketCapTrillionUSD: 0.24,
+    listedCompanies: 410,
     currency: 'VND'
   },
   {
@@ -338,8 +367,9 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'Australia',
     lat: -33.864,
     lng: 151.210,
-    dailyVolumeBillionUSD: 4.5,
-    marketCapTrillionUSD: 1.7,
+    monthlyTradeValueBillionUSD: 95,
+    marketCapTrillionUSD: 1.95,
+    listedCompanies: 2150,
     currency: 'AUD'
   }
 ];
