@@ -1,6 +1,7 @@
 export interface Exchange {
   id: string;
   name: string;
+  wfeName?: string; // The exact name used in WFE statistics for lookup
   city: string;
   country: string;
   lat: number;
@@ -26,6 +27,8 @@ export interface GlobePoint {
   data: Exchange;
 }
 
+// Re-export these from lib/exchangeStats if possible, but for now define compatible types
+// to avoid circular dependencies if lib imports types.
 export interface ListedCompaniesSnapshot {
   domestic?: number | null;
   foreign?: number | null;
