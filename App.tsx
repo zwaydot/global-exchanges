@@ -8,6 +8,20 @@ import { fetchExchangeDetails } from './services/geminiService';
 import { fetchExchangeStats } from './services/exchangeStatsService';
 import { normalizeKey } from './lib/exchangeStats';
 
+// Parent exchange mapping for fallback lookup
+// If a child exchange (e.g., Euronext Paris) has no data, try parent (e.g., Euronext)
+const PARENT_EXCHANGE_MAP: Record<string, string> = {
+  'euronextamsterdam': 'euronext',
+  'euronextbrussels': 'euronext',
+  'euronextdublin': 'euronext',
+  'euronextoslo': 'euronext',
+  'euronextparis': 'euronext',
+  'nasdaqomxnordiccopenhagen': 'nasdaqnordicandbaltics',
+  'nasdaqomxnordichelsinki': 'nasdaqnordicandbaltics',
+  'nasdaqomxnordiciceland': 'nasdaqnordicandbaltics',
+  'stockholm': 'nasdaqnordicandbaltics',
+};
+
 const App: React.FC = () => {
   const [selectedExchange, setSelectedExchange] = useState<Exchange | null>(null);
   const [details, setDetails] = useState<ExchangeDetails | null>(null);
@@ -36,10 +50,18 @@ const App: React.FC = () => {
     setStatsLoadingExchange(exchange.id);
     try {
       // Use normalized wfeName for API lookup, fallback to id if wfeName is not set
-      const lookupKey = normalizeKey(exchange.wfeName || exchange.id);
-      console.log('[App] Fetching stats for:', { exchangeId: exchange.id, wfeName: exchange.wfeName, lookupKey });
-      const response = await fetchExchangeStats(lookupKey);
-      console.log('[App] Stats response:', { exchangeId: response.exchangeId, hasStats: !!response.stats, meta: response.meta });
+      let lookupKey = normalizeKey(exchange.wfeName || exchange.id);
+      let response = await fetchExchangeStats(lookupKey);
+      
+      // If no data found and this is a child exchange, try parent exchange
+      if (!response.stats && PARENT_EXCHANGE_MAP[lookupKey]) {
+        const parentKey = PARENT_EXCHANGE_MAP[lookupKey];
+        const parentResponse = await fetchExchangeStats(parentKey);
+        if (parentResponse.stats) {
+          response = parentResponse;
+        }
+      }
+      
       // Only set meta if it exists (null means no data available, which is OK)
       if (response.meta) {
         setStatsMeta(response.meta);
