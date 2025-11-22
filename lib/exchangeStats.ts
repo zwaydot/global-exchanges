@@ -136,8 +136,6 @@ async function parseIssueHtml(html: string) {
   const tradingValueTable = parseMetricTable($, TRADING_VALUE_HEADING);
   const listedCompaniesTable = parseCompaniesTable($);
 
-  console.log(`[ExchangeStats] Found ${marketCapTable.map.size} exchanges in market cap table, ${tradingValueTable.map.size} in trading value table, ${listedCompaniesTable.map.size} in listed companies table`);
-
   const data: Record<string, ExchangeStatEntry> = {};
 
   // 收集所有出现的 key (normalizeKey 后的名字)
@@ -175,7 +173,6 @@ async function parseIssueHtml(html: string) {
     data[key] = entry;
   }
 
-  console.log(`[ExchangeStats] Parsed ${allKeys.size} unique exchanges, saved ${Object.keys(data).length} total exchanges`);
 
   return {
     slug: slugAttr,

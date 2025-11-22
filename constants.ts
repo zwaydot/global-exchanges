@@ -86,6 +86,15 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 18, marketCapTrillionUSD: 0.55, listedCompanies: 138, currency: 'MXN'
   },
   {
+    id: 'biva',
+    wfeName: 'Bolsa Institucional de Valores de Mexico',
+    name: 'Bolsa Institucional de Valores (BIVA)',
+    city: 'Mexico City',
+    country: 'Mexico',
+    lat: 19.435, lng: -99.140, // Slight offset from BMV
+    monthlyTradeValueBillionUSD: 5.7, marketCapTrillionUSD: 0, listedCompanies: 0, currency: 'MXN'
+  },
+  {
     id: 'bcs',
     wfeName: 'Bolsa de Comercio de Santiago', // WFE uses full name
     name: 'Santiago Stock Exchange',
@@ -488,6 +497,33 @@ export const STOCK_EXCHANGES: Exchange[] = [
     country: 'South Africa',
     lat: -26.100, lng: 28.053,
     monthlyTradeValueBillionUSD: 28, marketCapTrillionUSD: 1.2, listedCompanies: 310, currency: 'ZAR'
+  },
+  {
+    id: 'nsx',
+    wfeName: 'Namibian Stock Exchange',
+    name: 'Namibian Stock Exchange',
+    city: 'Windhoek',
+    country: 'Namibia',
+    lat: -22.560, lng: 17.065,
+    monthlyTradeValueBillionUSD: 0.05, marketCapTrillionUSD: 0.003, listedCompanies: 38, currency: 'NAD'
+  },
+  {
+    id: 'dse',
+    wfeName: 'Dar es Salaam Stock Exchange',
+    name: 'Dar es Salaam Stock Exchange',
+    city: 'Dar es Salaam',
+    country: 'Tanzania',
+    lat: -6.792, lng: 39.208,
+    monthlyTradeValueBillionUSD: 0.04, marketCapTrillionUSD: 0.008, listedCompanies: 28, currency: 'TZS'
+  },
+  {
+    id: 'brvm',
+    wfeName: 'BRVM',
+    name: 'Bourse Régionale des Valeurs Mobilières',
+    city: 'Abidjan',
+    country: 'West Africa',
+    lat: 5.360, lng: -4.008,
+    monthlyTradeValueBillionUSD: 0.13, marketCapTrillionUSD: 0.023, listedCompanies: 47, currency: 'XOF'
   },
   {
     id: 'ngkk',
