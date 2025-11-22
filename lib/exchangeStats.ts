@@ -9,39 +9,6 @@ const MARKET_CAP_HEADING = 'Equity - Domestic market capitalisation';
 const TRADING_VALUE_HEADING = 'Equity - Value of share trading';
 const LISTED_COMPANIES_HEADING = 'Equity - Number of listed companies';
 
-const EXCHANGE_ALIAS: Record<string, string[]> = {
-  nyse: ['nyse', 'new york stock exchange'],
-  nasdaq: ['nasdaq - us', 'nasdaq'],
-  tsx: ['tmx group', 'toronto stock exchange'],
-  b3: ['b3 - brasil bolsa balcão', 'b3 - brasil bolsa balcao', 'b3'],
-  bmv: ['bolsa mexicana de valores'],
-  santiago: ['bolsa de comercio de santiago'],
-  lse: ['london stock exchange', 'london stock exchange group', 'lseg'],
-  euronext: ['euronext'],
-  fwb: ['deutsche boerse ag', 'frankfurt stock exchange'],
-  six: ['six swiss exchange'],
-  stockholm: ['nasdaq omx nordic stockholm', 'nasdaq nordic and baltics'],
-  bist: ['borsa istanbul'],
-  tase: ['tel-aviv stock exchange'],
-  tadawul: ['saudi exchange (tadawul)', 'tadawul'],
-  adx: ['abu dhabi securities exchange'],
-  jse: ['johannesburg stock exchange'],
-  tse: ['tokyo stock exchange', 'japan exchange group'],
-  sse: ['shanghai stock exchange'],
-  szse: ['shenzhen stock exchange'],
-  hkex: ['hong kong exchanges and clearing'],
-  krx: ['korea exchange'],
-  twse: ['taiwan stock exchange'],
-  nse: ['national stock exchange of india'],
-  bse: ['bse india limited', 'bombay stock exchange'],
-  sgx: ['singapore exchange'],
-  idx: ['indonesia stock exchange'],
-  set: ['the stock exchange of thailand'],
-  bursa: ['bursa malaysia'],
-  hose: ['hochiminh stock exchange', 'ho chi minh stock exchange'],
-  asx: ['asx australian securities exchange', 'australian securities exchange'],
-};
-
 export interface ListedCompaniesStats {
   domestic?: number | null;
   foreign?: number | null;
@@ -171,10 +138,17 @@ async function parseIssueHtml(html: string) {
 
   const data: Record<string, ExchangeStatEntry> = {};
 
-  Object.entries(EXCHANGE_ALIAS).forEach(([exchangeId, aliases]) => {
-    const marketCapRow = findRow(marketCapTable.map, aliases);
-    const tradingRow = findRow(tradingValueTable.map, aliases);
-    const companiesRow = findCompanyRow(listedCompaniesTable.map, aliases);
+  // 收集所有出现的 key (normalizeKey 后的名字)
+  const allKeys = new Set<string>([
+    ...marketCapTable.map.keys(),
+    ...tradingValueTable.map.keys(),
+    ...listedCompaniesTable.map.keys()
+  ]);
+
+  for (const key of allKeys) {
+    const marketCapRow = marketCapTable.map.get(key);
+    const tradingRow = tradingValueTable.map.get(key);
+    const companiesRow = listedCompaniesTable.map.get(key);
 
     const entry: ExchangeStatEntry = {};
 
@@ -194,14 +168,15 @@ async function parseIssueHtml(html: string) {
       entry.listedCompanies = companiesRow;
     }
 
+    // 只有当至少有一项数据有效时才保存
     if (
       entry.marketCapUSD != null ||
       entry.monthlyTradingValueUSD != null ||
       entry.listedCompanies
     ) {
-      data[exchangeId] = entry;
+      data[key] = entry;
     }
-  });
+  }
 
   return {
     slug: slugAttr,
@@ -315,24 +290,6 @@ function findTable($: cheerio.CheerioAPI, heading: string) {
   return table;
 }
 
-function findRow(map: Map<string, RowMetrics>, aliases: string[]): RowMetrics | undefined {
-  for (const alias of aliases) {
-    const key = normalizeKey(alias);
-    const row = map.get(key);
-    if (row) return row;
-  }
-  return undefined;
-}
-
-function findCompanyRow(map: Map<string, ListedCompaniesStats>, aliases: string[]): ListedCompaniesStats | undefined {
-  for (const alias of aliases) {
-    const key = normalizeKey(alias);
-    const row = map.get(key);
-    if (row) return row;
-  }
-  return undefined;
-}
-
 function parseNumeric(value: string): number | null {
   const normalized = value.replace(/[^0-9.\-]/g, '');
   if (!normalized) return null;
@@ -348,18 +305,27 @@ function parsePercent(value: string): number | null {
 }
 
 function cleanName(value: string): string {
+  // 移除可能的脚注引用，如 "Exchange Name 1.2" -> "Exchange Name"
+  // 简单规则：如果末尾有数字，且前面的字符是字母，可能是脚注，但也可能是名称一部分（如 B3）。
+  // WFE 表格里的 footnote 通常是上标，text() 会直接连在一起。
+  // 这里的处理比较保守：只 trim 多余空格。normalizeKey 会去掉非字母数字。
   return value.replace(/\s+/g, ' ').trim();
 }
 
-function normalizeKey(value: string): string {
+export function normalizeKey(value: string): string {
+  // 统一转小写，移除所有非字母数字字符
+  // e.g. "Nasdaq - US" -> "nasdaqus"
+  // "B3 - Brasil Bolsa Balcão" -> "b3brasilbolsabalco"
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 function shouldSkipRow(name: string): boolean {
   const lower = name.toLowerCase();
   if (!name) return true;
+  // 跳过区域汇总行和注脚
   if (['americas', 'apac', 'emea'].includes(lower)) return true;
   if (lower.startsWith('total for')) return true;
+  if (lower.startsWith('note:')) return true;
   if (lower === 'note') return true;
   return false;
 }
@@ -368,5 +334,3 @@ function normalizePeriodLabel(label: string): string {
   if (!label) return '';
   return label.replace("'", ' ').replace(/\s+/g, ' ').trim();
 }
-
-
