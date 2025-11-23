@@ -25,15 +25,25 @@ npx wrangler kv:key get "market-ticker-cache:v1" \
 
 ### 3. 测试 API 端点
 
+**注意**：如果 staging/production 环境配置了 Cloudflare Access，API 端点可能被保护，需要通过浏览器访问。
+
 ```bash
-# 测试 staging 环境
+# 测试 staging 环境（如果被 Cloudflare Access 保护，会返回 302 重定向）
 curl -v "https://staging.deepstock.pro/api/market-ticker"
+
+# 或者通过浏览器访问（会自动处理认证）：
+# https://staging.deepstock.pro/api/market-ticker
 
 # 检查响应头中的 X-Cache-Status：
 # - fresh: 使用新鲜缓存
 # - stale-*: 使用过期缓存（但至少有效）
-# - 如果没有这个头，说明返回了错误
+# - 如果没有这个头，说明返回了错误或需要认证
 ```
+
+**如果遇到 302 重定向**：
+- 说明 Cloudflare Access 已启用
+- 需要通过浏览器访问并登录
+- 或者在 Cloudflare Access 中配置允许 API 端点访问
 
 ### 4. 查看 Cloudflare 日志
 
