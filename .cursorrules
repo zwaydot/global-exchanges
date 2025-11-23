@@ -1,0 +1,70 @@
+# Global Exchanges 项目开发规范
+
+本文档说明如何在本仓库进行开发、自测、提交变更日志以及发布上线，并包含关键技术栈（Globe.gl/Three.js）的实战经验总结。
+
+## 1. 项目结构
+- `apps/`: 服务端子项目 (do, mailer, main, prom, stream, task)
+- `packages/`: 共享库 (driven-common, eslint-config, etc.)
+- `components/`: 前端 React 组件 (GlobeViz 等)
+
+## 2. 开发流程
+- **Hotfix**: 从 `prod` 切出 -> 开发 -> `pnpm changeset:new` -> 提交 PR 到 prod & staging
+- **Feature**: 从 `staging` 切出 -> 开发 -> `pnpm changeset:new` -> 提交 PR 到 staging
+- **本地启动**: 根目录 `pnpm i` -> `pnpm dev` (需配置环境变量)
+
+## 3. 关键技术经验总结：Globe.gl & Three.js
+
+在本项目中，我们使用 `react-globe.gl` 结合 `three.js` 实现 3D 地球可视化。以下是在定制样式和解决由于版本/初始化时机导致的问题时总结的最佳实践：
+
+### 3.1 初始化与生命周期
+- **避免依赖 `onGlobeReady`**: 该回调在某些版本或特定加载顺序下可能不会触发。
+- **推荐初始化方式**: 使用 `useEffect` 并在组件挂载后，配合 `setTimeout` (如 100ms) 延迟访问 `globeEl.current`。
+- **空指针保护**: 在访问 `globeEl.current` 或其内部 `scene()`/`controls()` 之前，务必进行判空检查。
+
+### 3.2 材质与样式定制 (Material Customization)
+- **安全访问材质**: `globe.globeMaterial()` 方法在某些情况下可能报错或不可用。
+  ```typescript
+  // 错误做法
+  const mat = globe.globeMaterial(); // 可能抛出 TypeError
+  
+  // 正确做法 (Try-Catch + 类型检查)
+  try {
+    const mat = globe.globeMaterial();
+    if (mat && mat instanceof THREE.MeshPhongMaterial) {
+       // ...设置属性
+    }
+  } catch (e) { console.warn(e); }
+  ```
+- **异步纹理覆盖问题**: 地球纹理加载是异步的，可能会覆盖掉我们手动设置的材质属性（如 `emissive` 自发光）。
+  - **解决方案**: 使用**重试机制**，在初始化后的不同时间点（如 1s, 3s）多次执行材质更新逻辑，确保最终样式生效。
+- **亮度调整最佳实践**:
+  - **组合策略**: 同时调整光照（AmbientLight + DirectionalLight）和材质（emissive + specular），效果更明显
+  - **渐进式调整**: 先小幅提升（如环境光 1.5 → 2.0），如果效果不明显再大幅提升（2.0 → 2.8）
+  - **避免过曝**: 自发光强度不要超过 0.6，否则会失去细节和层次感
+  - **多光源**: 使用 2-3 个不同方向的定向光，可以消除暗部死角，让地球更立体
+
+### 3.3 场景与光照 (Scene & Lighting)
+- **提升亮度**: 默认光照较暗。建议手动向场景添加 `AmbientLight` (环境光, 强度 > 1.0) 和 `DirectionalLight` (定向光)。
+  - **推荐配置**:
+    - `AmbientLight`: 强度 2.5-3.0（提供全局基础亮度）
+    - `DirectionalLight`: 强度 3.5-4.0（主光源，提供方向性高光）
+    - 可添加第二个 `DirectionalLight`（强度 2.0）从另一侧照射，消除阴影死角
+  - **材质自发光 (Emissive)**:
+    - 设置 `emissive` 颜色为 `0x444444` 或更高（如 `0x555555`）
+    - `emissiveIntensity` 设置为 `0.4-0.5`（过高会过曝）
+    - 配合 `specular` 高光反射（如 `0x222222`）增强立体感
+  - **验证亮度调整**: 对比线上版本，确保暗部细节可见，整体亮度有明显提升
+- **自定义背景 (Stars)**:
+  - 不要使用 `backgroundImageUrl` (静态且难以控制)。
+  - 推荐直接创建 `THREE.Points` 添加到 `scene` 中。
+  - **关键设置**: 设置 `renderOrder = -1` 和 `depthWrite: false`，确保星星作为背景渲染，不会遮挡地球。
+  - **透明背景**: 将 `<Globe>` 组件的 `backgroundColor` 设置为 `"rgba(0,0,0,0)"`，以便自定义的 Three.js 背景能正确显示。
+  - **星星大小和亮度变化**: 创建多个 `Points` 对象，每组使用不同的 `size`（如 1.2, 2.0, 3.5），并通过 `vertexColors: true` 为每个星星设置不同的颜色（亮度），模拟真实星空效果
+
+### 3.4 交互与性能
+- **渲染循环**: 如果在 `useEffect` 中开启了自定义的 `requestAnimationFrame` 循环，请确保组件卸载时正确清理。
+- **事件监听**: 鼠标交互事件（如 hover）应配合 `useRef` 存储状态，避免频繁触发 React 重渲染导致 Globe 实例重建。
+
+---
+*Last Updated: 2025-01-23*
+
