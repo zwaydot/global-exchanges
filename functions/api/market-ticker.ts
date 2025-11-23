@@ -35,9 +35,10 @@ const readCache = async (kv?: KVNamespace): Promise<CachePayload | null> => {
 const writeCache = async (payload: CachePayload, kv?: KVNamespace) => {
   if (kv) {
     try {
-      await kv.put(CACHE_KEY, JSON.stringify(payload), {
-        expirationTtl: Math.ceil(CACHE_TTL_MS / 1000)
-      });
+      // 移除 expirationTtl，让数据持久化
+      // 数据新鲜度由 isCacheFresh() 函数检查，而不是通过 KV TTL
+      // 这样可以避免因 API 失败导致数据完全丢失
+      await kv.put(CACHE_KEY, JSON.stringify(payload));
     } catch (err) {
       console.error('[Market Ticker API] Failed to write KV cache:', err);
     }
@@ -183,6 +184,13 @@ export const onRequest: PagesFunction = async (context) => {
     if (results.length === 0) {
       if (cached && cached.data.length > 0) {
         console.warn('[Market Ticker API] Using cached ticker data due to fetch failures (0 results)');
+        // 即使获取失败，也更新 timestamp 以标记"最后尝试时间"
+        // 这样可以帮助调试，了解最后一次成功获取的时间
+        const stalePayload: CachePayload = {
+          timestamp: cached.timestamp, // 保持原 timestamp，不更新为 now
+          data: cached.data
+        };
+        // 不写入 KV，因为数据没有更新，只是使用旧数据
         return new Response(JSON.stringify(cached.data), {
           status: 200,
           headers: {
