@@ -116,7 +116,7 @@ const App: React.FC = () => {
         <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter drop-shadow-md">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-cyan-300">Global</span> Exchanges
         </h1>
-        <p className="text-gray-400 text-sm mt-2 drop-shadow-sm">
+        <p className="text-gray-400 text-xs md:text-sm mt-2 drop-shadow-sm">
           Explore the world's markets in 3D, built by{' '}
           <a 
             href="https://x.com/zway_ai" 
