@@ -7,7 +7,7 @@ interface TickerResult {
 
 type EnvBindings = {
   FMP_API_KEY?: string;
-  MARKET_TICKER_CACHE?: KVNamespace;
+  MARKET_DATA_CACHE?: KVNamespace;
 };
 
 interface CachePayload {
@@ -64,7 +64,7 @@ export const onRequest: PagesFunction = async (context) => {
   }
 
   try {
-    const { FMP_API_KEY: apiKey, MARKET_TICKER_CACHE: kv } = context.env as EnvBindings;
+    const { FMP_API_KEY: apiKey, MARKET_DATA_CACHE: kv } = context.env as EnvBindings;
     
     if (!apiKey) {
       console.error('[Market Ticker API] FMP_API_KEY not configured');
@@ -215,7 +215,7 @@ export const onRequest: PagesFunction = async (context) => {
     console.error('[Market Ticker API] Error:', error);
     // Try to return cached data even on error
     try {
-      const { MARKET_TICKER_CACHE: kv } = context.env as EnvBindings;
+      const { MARKET_DATA_CACHE: kv } = context.env as EnvBindings;
       const cached = await readCache(kv);
       if (cached && cached.data.length > 0) {
         console.warn('[Market Ticker API] Error occurred, serving stale cache as fallback');

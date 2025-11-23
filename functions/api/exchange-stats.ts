@@ -2,22 +2,22 @@ import { getStoredExchangeStats, refreshExchangeStats, StoredExchangeStats } fro
 
 const STALE_MS = 1000 * 60 * 60 * 24 * 35; // 35 days
 
-export const onRequest: PagesFunction<{ MARKET_TICKER_CACHE: KVNamespace }> = async (context) => {
+export const onRequest: PagesFunction<{ MARKET_DATA_CACHE: KVNamespace }> = async (context) => {
   const { request, env } = context;
   const url = new URL(request.url);
   const exchangeId = url.searchParams.get('exchangeId') ?? undefined;
   const forceRefresh = url.searchParams.get('force') === '1';
 
-  let snapshot = forceRefresh ? null : await getStoredExchangeStats(env.MARKET_TICKER_CACHE);
+  let snapshot = forceRefresh ? null : await getStoredExchangeStats(env.MARKET_DATA_CACHE);
 
   if (!snapshot || isStale(snapshot)) {
     try {
-      snapshot = await refreshExchangeStats(env.MARKET_TICKER_CACHE);
+      snapshot = await refreshExchangeStats(env.MARKET_DATA_CACHE);
     } catch (error) {
       console.error('[ExchangeStats API] Failed to refresh stats', error);
       // If refresh fails, try to use existing snapshot (if any)
       if (!snapshot) {
-        snapshot = await getStoredExchangeStats(env.MARKET_TICKER_CACHE);
+        snapshot = await getStoredExchangeStats(env.MARKET_DATA_CACHE);
       }
     }
   }
