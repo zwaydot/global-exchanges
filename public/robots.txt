@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://gex.deepstock.pro/sitemap.xml
-
+Sitemap: https://deepstock.pro/sitemap.xml
