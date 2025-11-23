@@ -576,7 +576,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     name: 'Stock Exchange of Mauritius',
     city: 'Port Louis',
     country: 'Mauritius',
-    lat: -20.160, lng: 57.501,
+    lat: -20.162, lng: 57.499, // 修正坐标，确保显示在毛里求斯岛上
     monthlyTradeValueBillionUSD: 0.1, marketCapTrillionUSD: 0.01, listedCompanies: 100, currency: 'MUR'
   },
   {

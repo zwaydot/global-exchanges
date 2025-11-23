@@ -58,24 +58,199 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
     window.addEventListener('mousemove', handleInteraction);
     window.addEventListener('pointerdown', handleInteraction);
 
-    if (globeEl.current) {
-      const controls = globeEl.current.controls();
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.6;
-      
-      // Responsive initial view
-      const isMobile = window.innerWidth < 640;
-      // Increase altitude on mobile (2.5) to fit the globe in narrower width
-      // Keep closer (1.7) on desktop for impact
-      globeEl.current.pointOfView({ lat: 20, lng: 0, altitude: isMobile ? 2.5 : 1.7 });
-    }
-
     return () => {
       window.removeEventListener('mousemove', handleInteraction);
       window.removeEventListener('pointerdown', handleInteraction);
       document.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [onSelect]); // Add onSelect dependency if it changes (though it usually doesn't)
+
+  // Initialize Globe Scene (Brightness & Custom Stars)
+  useEffect(() => {
+    // Delay slightly to ensure Globe is mounted and ref is populated
+    const initTimer = setTimeout(() => {
+        if (!globeEl.current) return;
+        
+        try {
+            const globe = globeEl.current;
+            const scene = globe.scene();
+            
+            // 0. 优化渲染器设置以提升清晰度
+            const renderer = globe.renderer();
+            if (renderer) {
+                // 设置高像素比率以提升清晰度（特别是高DPI屏幕）
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                // 确保抗锯齿已启用
+                if (!renderer.antialias) {
+                    console.warn('Renderer antialias not enabled');
+                }
+            }
+            
+            // 1. Config Lighting (Brightness) - 大幅增强亮度
+            // Add Ambient Light
+            if (!scene.getObjectByName('custom-ambient-light')) {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 2.8); // 大幅增强环境光
+                ambientLight.name = 'custom-ambient-light';
+                scene.add(ambientLight);
+            }
+            // Add Directional Light for highlights
+            if (!scene.getObjectByName('custom-dir-light')) {
+                const dirLight = new THREE.DirectionalLight(0xffffff, 4.0); // 大幅增强定向光
+                dirLight.position.set(50, 50, 50);
+                dirLight.name = 'custom-dir-light';
+                scene.add(dirLight);
+            }
+            // 添加额外的定向光从另一侧，增加整体亮度
+            if (!scene.getObjectByName('custom-dir-light-2')) {
+                const dirLight2 = new THREE.DirectionalLight(0xffffff, 2.0);
+                dirLight2.position.set(-30, 30, -30);
+                dirLight2.name = 'custom-dir-light-2';
+                scene.add(dirLight2);
+            }
+
+            // 2. Config Material - 大幅增强材质自发光 + 优化纹理清晰度
+            const updateMaterial = () => {
+                // globeMaterial() might not be available immediately or might be a function depending on version
+                // Safe check for globeMaterial
+                let mat;
+                try {
+                     // @ts-ignore
+                     mat = globe.globeMaterial();
+                } catch(e) {
+                    // Ignore if function not found
+                }
+
+                if (mat && mat instanceof THREE.MeshPhongMaterial) {
+                    mat.color = new THREE.Color(0xffffff);
+                    mat.emissive = new THREE.Color(0x444444); // 大幅增强自发光颜色
+                    mat.emissiveIntensity = 0.5; // 大幅增强自发光强度
+                    mat.shininess = 25;
+                    // 增加高光反射，让地球更亮
+                    mat.specular = new THREE.Color(0x222222);
+                    
+                    // 优化纹理过滤以提升清晰度
+                    if (mat.map) {
+                        const renderer = globe.renderer();
+                        if (renderer) {
+                            // 使用高质量纹理过滤
+                            mat.map.minFilter = THREE.LinearMipMapLinearFilter;
+                            mat.map.magFilter = THREE.LinearFilter;
+                            mat.map.generateMipmaps = true;
+                            // 设置各向异性过滤（提升纹理清晰度）
+                            mat.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                            mat.map.needsUpdate = true;
+                        }
+                    }
+                }
+            };
+            updateMaterial();
+            // Retry mechanism to ensure material settings stick after texture load
+            // Globe texture loading is async, so we check a few times
+            setTimeout(updateMaterial, 1000);
+            setTimeout(updateMaterial, 3000);
+            setTimeout(updateMaterial, 5000); // 额外重试，确保纹理完全加载后优化
+            
+            // 优化纹理过滤设置（如果纹理已加载）
+            const updateTextureFilter = () => {
+                try {
+                    const mat = globe.globeMaterial();
+                    if (mat && mat.map) {
+                        const renderer = globe.renderer();
+                        if (renderer) {
+                            // 使用高质量过滤以提升放大后的清晰度
+                            mat.map.minFilter = THREE.LinearMipMapLinearFilter;
+                            mat.map.magFilter = THREE.LinearFilter;
+                            mat.map.generateMipmaps = true;
+                            // 设置各向异性过滤（提升纹理清晰度）
+                            mat.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                            mat.map.needsUpdate = true;
+                        }
+                    }
+                } catch(e) {
+                    // Texture might not be loaded yet
+                }
+            };
+            // 延迟执行，等待纹理加载
+            setTimeout(updateTextureFilter, 500);
+            setTimeout(updateTextureFilter, 2000);
+
+            // 3. Add Custom Stars (with varying sizes and brightness)
+            if (!scene.getObjectByName('custom-stars')) {
+                const starCount = 4000;
+                const starGroup = new THREE.Group();
+                starGroup.name = 'custom-stars';
+                starGroup.renderOrder = -1; // Render behind everything
+
+                // 创建三组不同大小的星星，模拟真实星空的层次感
+                const starLayers = [
+                    { count: Math.floor(starCount * 0.65), size: 1.2, brightnessRange: [0.3, 0.6] }, // 小星星，较暗（大多数）
+                    { count: Math.floor(starCount * 0.25), size: 2.0, brightnessRange: [0.5, 0.8] }, // 中等星星
+                    { count: Math.floor(starCount * 0.10), size: 3.5, brightnessRange: [0.7, 1.0] } // 大星星，较亮（少数）
+                ];
+
+                starLayers.forEach((layer, layerIndex) => {
+                    const starGeometry = new THREE.BufferGeometry();
+                    const starPositions = new Float32Array(layer.count * 3);
+                    const starColors = new Float32Array(layer.count * 3); // RGB for each star
+
+                    for (let i = 0; i < layer.count; i++) {
+                        // 随机位置
+                        const r = 400 + Math.random() * 600;
+                        const theta = 2 * Math.PI * Math.random();
+                        const phi = Math.acos(2 * Math.random() - 1);
+
+                        starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                        starPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                        starPositions[i * 3 + 2] = r * Math.cos(phi);
+
+                        // 随机亮度（金色 #fbbf24 = rgb(251, 191, 36)）
+                        const brightness = layer.brightnessRange[0] + Math.random() * (layer.brightnessRange[1] - layer.brightnessRange[0]);
+                        starColors[i * 3] = 251 / 255 * brightness;     // R
+                        starColors[i * 3 + 1] = 191 / 255 * brightness; // G
+                        starColors[i * 3 + 2] = 36 / 255 * brightness;  // B
+                    }
+
+                    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+                    starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+                    // 使用 PointsMaterial，每组星星统一大小，但每个星星有不同的颜色（亮度）
+                    const starMaterial = new THREE.PointsMaterial({
+                        size: layer.size,
+                        sizeAttenuation: false, // 固定大小，不随距离变化
+                        transparent: true,
+                        opacity: 1.0, // 使用 vertexColors 来控制每个点的亮度
+                        depthWrite: false,
+                        vertexColors: true // 启用每个点的独立颜色
+                    });
+
+                    const stars = new THREE.Points(starGeometry, starMaterial);
+                    stars.name = `custom-stars-layer-${layerIndex}`;
+                    starGroup.add(stars);
+                });
+
+                scene.add(starGroup);
+            }
+            
+            // 4. Initial Controls & View
+            const controls = globe.controls();
+            if (controls) {
+                controls.autoRotate = true;
+                controls.autoRotateSpeed = 0.6;
+                // Ensure controls don't block the view
+                controls.minDistance = 101; // Prevent going inside
+                controls.maxDistance = 1000;
+            }
+            
+            const isMobile = window.innerWidth < 640;
+            globe.pointOfView({ lat: 20, lng: 0, altitude: isMobile ? 2.5 : 1.7 });
+
+        } catch (e) {
+            console.error("Globe initialization error:", e);
+        }
+    }, 100); // Short delay after mount
+
+    return () => clearTimeout(initTimer);
+  }, []);
 
   // Format data for rings (pulsating effect for volume)
   const ringsData = useMemo(() => {
@@ -91,8 +266,12 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
         maxR, 
         propagationSpeed: 1.5,
         repeatPeriod: 800,
-        // Color: Gold/Amber fading out
-        color: (t: number) => `rgba(251, 191, 36, ${1 - t})`, 
+        // Color: Gold/Amber fading out - 大交易所的波形图更亮
+        color: (t: number) => {
+          const isMajor = e.monthlyTradeValueBillionUSD > 50;
+          const baseOpacity = isMajor ? 0.9 : 0.7; // 大交易所初始更亮
+          return `rgba(251, 191, 36, ${baseOpacity * (1 - t)})`;
+        }, 
       };
     });
   }, [exchanges]);
@@ -100,14 +279,17 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
   // Points Data: Show a dot for ALL exchanges (interactive targets)
   // This ensures even if label is hidden, the exchange is visible and clickable.
   const pointsData = useMemo(() => {
-    return exchanges.map(e => ({
-      lat: e.lat,
-      lng: e.lng,
-      size: 0.4, // Small clickable dot
-      color: e.monthlyTradeValueBillionUSD > 50 ? '#fbbf24' : 'rgba(255, 255, 255, 0.5)', // Gold for big, White-ish for small
-      data: e,
-      label: `${e.name} (${e.id.toUpperCase()})` // Tooltip text
-    }));
+    return exchanges.map(e => {
+      const isMajor = e.monthlyTradeValueBillionUSD > 50;
+      return {
+        lat: e.lat,
+        lng: e.lng,
+        size: isMajor ? 0.6 : 0.4, // 大交易所的点更大，更明显
+        color: isMajor ? '#fbbf24' : 'rgba(255, 255, 255, 0.5)', // Gold for big, White-ish for small
+        data: e,
+        label: `${e.name} (${e.id.toUpperCase()})` // Tooltip text
+      };
+    });
   }, [exchanges]);
 
   // Format data for labels (Text)
@@ -124,14 +306,14 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       ...e,
       lLat: e.lat,
       lLng: e.lng,
-      // Heuristic radius based on text length
-      radius: 1.5 + (e.id.length * 0.4) 
+      // Heuristic radius based on text length - 减小半径，让标签更靠近原始位置
+      radius: 1.2 + (e.id.length * 0.3) 
     }));
 
-    // 2. Iterative repulsion to separate close labels (Same logic as before)
-    const ITERATIONS = 50; 
-    const REPULSION_STRENGTH = 0.3;
-    const ANCHOR_STRENGTH = 0.05; 
+    // 2. Iterative repulsion to separate close labels (优先保持靠近原始位置)
+    const ITERATIONS = 50; // 减少迭代次数，避免过度分离
+    const REPULSION_STRENGTH = 0.25; // 减小排斥力，让标签分开但不会离太远
+    const ANCHOR_STRENGTH = 0.15; // 大幅增强锚点强度，确保标签始终靠近原始坐标位置 
 
     for (let iter = 0; iter < ITERATIONS; iter++) {
       for (let i = 0; i < nodes.length; i++) {
@@ -217,8 +399,8 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
   return (
     <Globe
       ref={globeEl}
-      globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-      backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+      globeImageUrl="https://raw.githubusercontent.com/vasturiano/three-globe/master/example/img/earth-night.jpg"
+      backgroundColor="rgba(0,0,0,0)" // Transparent to let CSS background show or custom scene background
       
       // Rings (Volume Visualization)
       ringsData={ringsData}
@@ -244,11 +426,14 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       labelText="text"
       labelSize="size"
       labelColor="color"
-      labelDotRadius={0} // Hide the dot built into the label layer, we use pointsLayer for that
+      labelDotRadius={0.15} // 显示连接点，让标签和坐标点的对应关系更清晰
+      labelDotColor="rgba(251, 191, 36, 0.6)" // 金色半透明连接点
       labelAltitude={0.01}
       
       // Custom Layer: 3D Beacons (Glowing Light Columns)
       customLayerData={exchanges}
+      customLayerLat="lat"
+      customLayerLng="lng"
       customThreeObject={(d: any) => {
         const { monthlyTradeValueBillionUSD } = d as Exchange;
         // Ensure even small exchanges have a tiny bar
