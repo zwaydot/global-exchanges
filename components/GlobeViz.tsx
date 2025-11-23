@@ -242,7 +242,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
             }
             
             const isMobile = window.innerWidth < 640;
-            globe.pointOfView({ lat: 20, lng: 0, altitude: isMobile ? 2.5 : 1.7 });
+            globe.pointOfView({ lat: 20, lng: 0, altitude: isMobile ? 4.0 : 2 }); // 增加观察距离，让地球在视觉上更小
 
         } catch (e) {
             console.error("Globe initialization error:", e);
@@ -392,7 +392,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
     
     if (globeEl.current) {
       const isMobile = window.innerWidth < 640;
-      globeEl.current.pointOfView({ lat, lng, altitude: isMobile ? 2.0 : 1.5 }, 1000);
+      globeEl.current.pointOfView({ lat, lng, altitude: isMobile ? 2.5 : 2.0 }, 1000); // 增加观察距离，让地球在视觉上更小
     }
   };
 
