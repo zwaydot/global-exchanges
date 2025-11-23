@@ -7,7 +7,7 @@ interface TickerResult {
 
 type EnvBindings = {
   FMP_API_KEY?: string;
-  MARKET_TICKER_CACHE?: KVNamespace;
+  MARKET_DATA_CACHE?: KVNamespace;
 };
 
 interface CachePayload {
@@ -64,12 +64,26 @@ export const onRequest: PagesFunction = async (context) => {
   }
 
   try {
-    const { FMP_API_KEY: apiKey, MARKET_TICKER_CACHE: kv } = context.env as EnvBindings;
+    const { FMP_API_KEY: apiKey, MARKET_DATA_CACHE: kv } = context.env as EnvBindings;
     
     if (!apiKey) {
       console.error('[Market Ticker API] FMP_API_KEY not configured');
+      // If no API key, try to return cached data if available
+      const cached = await readCache(kv);
+      if (cached && cached.data.length > 0) {
+        console.warn('[Market Ticker API] FMP_API_KEY not configured, serving stale cache');
+        return new Response(JSON.stringify(cached.data), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=60',
+            'X-Cache-Status': 'stale-no-key'
+          },
+        });
+      }
       return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
+        JSON.stringify({ error: 'Server configuration error: FMP_API_KEY not configured' }),
         {
           status: 500,
           headers: {
@@ -84,15 +98,19 @@ export const onRequest: PagesFunction = async (context) => {
     const now = Date.now();
     const cached = await readCache(kv);
     if (isCacheFresh(cached, now)) {
+      console.log(`[Market Ticker API] Serving fresh cache (age: ${Math.round((now - cached!.timestamp) / 1000)}s)`);
       return new Response(JSON.stringify(cached!.data), {
         status: 200,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=60'
+          'Cache-Control': 'public, max-age=60',
+          'X-Cache-Status': 'fresh'
         },
       });
     }
+    
+    console.log(`[Market Ticker API] Cache expired or missing, fetching from FMP (cache age: ${cached ? Math.round((now - cached.timestamp) / 1000) : 'N/A'}s)`);
 
     const SYMBOLS = ['SPY', 'QQQ', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA'];
     const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
@@ -144,10 +162,12 @@ export const onRequest: PagesFunction = async (context) => {
           headers: {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
-            'Cache-Control': 'public, max-age=60'
+            'Cache-Control': 'public, max-age=60',
+            'X-Cache-Status': 'stale-rate-limited'
           },
         });
       }
+      console.error('[Market Ticker API] Rate limited and no cache available');
       return new Response(
         JSON.stringify({ error: 'Rate limited by FMP. Please wait before retrying.' }),
         {
@@ -162,35 +182,58 @@ export const onRequest: PagesFunction = async (context) => {
 
     if (results.length === 0) {
       if (cached && cached.data.length > 0) {
-        console.warn('[Market Ticker API] Using cached ticker data due to fetch failures');
+        console.warn('[Market Ticker API] Using cached ticker data due to fetch failures (0 results)');
         return new Response(JSON.stringify(cached.data), {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
-            'Cache-Control': 'public, max-age=60'
+            'Cache-Control': 'public, max-age=60',
+            'X-Cache-Status': 'stale-fetch-failed'
           },
         });
       }
+      console.error('[Market Ticker API] No market data fetched and no cache available');
       throw new Error('No market data fetched');
     }
 
     const payload: CachePayload = { timestamp: now, data: results };
     await writeCache(payload, kv);
+    console.log(`[Market Ticker API] Successfully fetched and cached ${results.length} tickers`);
 
     return new Response(JSON.stringify(results), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=60'
+        'Cache-Control': 'public, max-age=60',
+        'X-Cache-Status': 'fresh'
       },
     });
 
   } catch (error) {
     console.error('[Market Ticker API] Error:', error);
+    // Try to return cached data even on error
+    try {
+      const { MARKET_DATA_CACHE: kv } = context.env as EnvBindings;
+      const cached = await readCache(kv);
+      if (cached && cached.data.length > 0) {
+        console.warn('[Market Ticker API] Error occurred, serving stale cache as fallback');
+        return new Response(JSON.stringify(cached.data), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=60',
+            'X-Cache-Status': 'stale-error-fallback'
+          },
+        });
+      }
+    } catch (cacheError) {
+      console.error('[Market Ticker API] Failed to read cache on error:', cacheError);
+    }
     return new Response(
-      JSON.stringify({ error: 'Failed to fetch market data' }),
+      JSON.stringify({ error: 'Failed to fetch market data', details: error instanceof Error ? error.message : String(error) }),
       {
         status: 500,
         headers: {
