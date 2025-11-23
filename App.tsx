@@ -113,11 +113,24 @@ const App: React.FC = () => {
     <div className="relative w-full h-screen bg-[#020617] overflow-hidden">
       {/* Semantic Header for SEO */}
       <header className="absolute top-0 left-0 p-4 md:p-6 z-10 pointer-events-none w-full md:w-auto">
-        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tighter drop-shadow-md">
+        <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter drop-shadow-md">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-cyan-300">Global</span> Exchanges
         </h1>
-        <p className="text-gray-400 text-sm md:max-w-xs mt-2 drop-shadow-sm max-w-[240px]">
-          Interactive 3D visualization of major stock exchanges and trading volumes.
+        <p className="text-gray-400 text-sm mt-2 drop-shadow-sm">
+          Explore the world's markets in 3D, built by{' '}
+          <a 
+            href="https://x.com/zway_ai" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="relative inline-block pointer-events-auto group"
+          >
+            <span className="text-gray-400 transition-opacity duration-300 ease-in-out group-hover:opacity-0">
+              @zway
+            </span>
+            <span className="absolute inset-0 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-cyan-300 opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-100">
+              @zway
+            </span>
+          </a>
         </p>
         <nav>
           <a 
