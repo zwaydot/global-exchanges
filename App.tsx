@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import GlobeViz from './components/GlobeViz';
 import DetailPanel from './components/DetailPanel';
 import Ticker from './components/Ticker';
+import { Leaderboard, LeaderboardButton } from './components/Leaderboard';
 import { STOCK_EXCHANGES } from './constants';
 import { Exchange, ExchangeDetails, ExchangeStatsMeta, ExchangeStatsSnapshot } from './types';
 import { fetchExchangeDetails } from './services/geminiService';
@@ -30,6 +31,7 @@ const App: React.FC = () => {
   const [statsMeta, setStatsMeta] = useState<ExchangeStatsMeta | null>(null);
   const [statsLoadingExchange, setStatsLoadingExchange] = useState<string | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
   // Remove loader manually if window load event fired before React hydration
   useEffect(() => {
@@ -145,6 +147,11 @@ const App: React.FC = () => {
         </nav>
       </header>
 
+      {/* Leaderboard Button */}
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 md:bottom-auto md:left-auto md:top-0 md:right-0 md:translate-x-0 p-0 md:p-6 z-20 pointer-events-auto">
+        <LeaderboardButton onClick={() => setIsLeaderboardOpen(true)} />
+      </div>
+
       {/* Semantic Legend Section - REMOVED per user request */}
 
 
@@ -206,6 +213,12 @@ const App: React.FC = () => {
       
       {/* Financial Ticker */}
       <Ticker />
+
+      {/* Leaderboard Modal */}
+      <Leaderboard 
+        isOpen={isLeaderboardOpen} 
+        onClose={() => setIsLeaderboardOpen(false)} 
+      />
     </div>
   );
 };
