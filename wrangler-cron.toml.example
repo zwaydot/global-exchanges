@@ -6,8 +6,9 @@ kv_namespaces = [
   { binding = "MARKET_DATA_CACHE", id = "f47995f0fdb143a4b76d073f969e5708" }
 ]
 
-# FMP_API_KEY 需要在 Cloudflare Dashboard 中配置为 Secret
-# Workers > exchange-cron > Settings > Variables > Add variable (Encrypt)
+[vars]
+# 从 https://site.financialmodelingprep.com/developer/docs 获取 API Key
+FMP_API_KEY = "your_fmp_api_key_here"
 
 [triggers]
 # FMP 免费计划只提供 End of Day 数据，每天刷新一次即可

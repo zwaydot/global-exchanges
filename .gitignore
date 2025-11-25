@@ -31,3 +31,6 @@ dist-ssr
 
 # Personal deployment notes
 DEPLOY.md
+
+# Wrangler config with secrets
+wrangler-cron.toml
