@@ -6,6 +6,13 @@
 - `apps/`: 服务端子项目 (do, mailer, main, prom, stream, task)
 - `packages/`: 共享库 (driven-common, eslint-config, etc.)
 - `components/`: 前端 React 组件 (GlobeViz 等)
+- `lib/`: 共享业务逻辑模块
+  - `marketTicker.ts`: FMP Ticker 数据刷新逻辑（可被 API 和 Cron Worker 共用）
+  - `exchangeStats.ts`: WFE 交易所统计数据解析逻辑
+- `functions/api/`: Cloudflare Pages Functions API 端点
+  - `market-ticker.ts`: 股票行情 API，从 KV 缓存读取或调用 FMP API
+- `workers/`: Cloudflare Workers（定时任务）
+  - `exchange-cron.ts`: 定时刷新任务（Ticker 和 Exchange Stats）
 
 ## 2. 开发流程
 - **Hotfix**: 从 `prod` 切出 -> 开发 -> `pnpm changeset:new` -> 提交 PR 到 prod & staging
@@ -65,6 +72,43 @@
 - **渲染循环**: 如果在 `useEffect` 中开启了自定义的 `requestAnimationFrame` 循环，请确保组件卸载时正确清理。
 - **事件监听**: 鼠标交互事件（如 hover）应配合 `useRef` 存储状态，避免频繁触发 React 重渲染导致 Globe 实例重建。
 
+## 4. FMP Ticker 数据更新机制
+
+### 4.1 架构设计
+- **共享模块**: `lib/marketTicker.ts` 提供统一的数据刷新逻辑，可被 API endpoint 和 Cron Worker 共用
+- **定时刷新**: 通过 `exchange-cron` Worker 每天 UTC 22:00 自动刷新（美股收盘后 1-2 小时）
+- **缓存策略**: KV 缓存 TTL 设置为 48 小时，作为保险机制（如果 Cron 连续失败，用户访问时会触发刷新）
+
+### 4.2 FMP API 限制
+- **免费计划**: 只提供 End of Day (EOD) 数据，即前一天的收盘数据
+- **刷新频率**: 每天刷新一次即可，无需实时更新
+- **Rate Limit**: 免费计划有调用限制，代码中已加入 250ms 延迟避免触发 429
+
+### 4.3 数据流程
+```
+Cron Worker (UTC 22:00) 
+  → fetchTickerFromFMP() 
+    → 调用 FMP API 
+      → writeTickerCache() 
+        → 写入 KV
+
+用户访问 /api/market-ticker 
+  → readTickerCache() 
+    → 检查 isTickerCacheFresh() 
+      → 新鲜：直接返回 KV 数据
+      → 过期：调用 FMP API 刷新
+```
+
+### 4.4 配置要求
+- **Cloudflare Dashboard**: 需要在 `exchange-cron` Worker 的 Settings → Variables 中配置 `FMP_API_KEY`（加密存储）
+- **本地开发**: 在 `.env` 文件中配置 `FMP_API_KEY`（已添加到 `.env.example`）
+
+### 4.5 最佳实践
+- **不要频繁刷新**: FMP 免费计划只提供 EOD 数据，每天刷新一次足够
+- **缓存优先**: 用户访问时优先使用 KV 缓存，减少 API 调用
+- **错误处理**: 如果 API 调用失败，返回旧缓存数据（总比没有数据好）
+- **日志记录**: 所有关键操作都有日志，便于调试和监控
+
 ---
-*Last Updated: 2025-01-23*
+*Last Updated: 2025-11-25*
 
