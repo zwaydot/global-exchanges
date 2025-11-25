@@ -1,54 +1,35 @@
-interface TickerResult {
-  symbol: string;
-  price: number;
-  change: number;
-  changesPercentage: number;
-}
+import {
+  readTickerCache,
+  writeTickerCache,
+  isTickerCacheFresh,
+  fetchTickerFromFMP,
+  type CachePayload
+} from '../../lib/marketTicker';
 
 type EnvBindings = {
   FMP_API_KEY?: string;
   MARKET_DATA_CACHE?: KVNamespace;
 };
 
-interface CachePayload {
-  timestamp: number;
-  data: TickerResult[];
-}
-
-const CACHE_KEY = 'market-ticker-cache:v1';
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
+// 内存缓存作为 KV 不可用时的备用
 let memoryCache: CachePayload | null = null;
 
 const readCache = async (kv?: KVNamespace): Promise<CachePayload | null> => {
   if (kv) {
-    try {
-      const cached = await kv.get(CACHE_KEY, 'json') as CachePayload | null;
-      return cached;
-    } catch (err) {
-      console.error('[Market Ticker API] Failed to read KV cache:', err);
-    }
+    return readTickerCache(kv);
   }
   return memoryCache;
 };
 
 const writeCache = async (payload: CachePayload, kv?: KVNamespace) => {
   if (kv) {
-    try {
-      // 移除 expirationTtl，让数据持久化
-      // 数据新鲜度由 isCacheFresh() 函数检查，而不是通过 KV TTL
-      // 这样可以避免因 API 失败导致数据完全丢失
-      await kv.put(CACHE_KEY, JSON.stringify(payload));
-    } catch (err) {
-      console.error('[Market Ticker API] Failed to write KV cache:', err);
-    }
+    await writeTickerCache(payload, kv);
   }
   memoryCache = payload;
 };
 
 const isCacheFresh = (payload: CachePayload | null, now: number) => {
-  if (!payload) return false;
-  return now - payload.timestamp < CACHE_TTL_MS;
+  return isTickerCacheFresh(payload, now);
 };
 
 export const onRequest: PagesFunction = async (context) => {
@@ -113,47 +94,8 @@ export const onRequest: PagesFunction = async (context) => {
     
     console.log(`[Market Ticker API] Cache expired or missing, fetching from FMP (cache age: ${cached ? Math.round((now - cached.timestamp) / 1000) : 'N/A'}s)`);
 
-    const SYMBOLS = ['SPY', 'QQQ', 'VWO', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA'];
-    const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
-
-    const results: TickerResult[] = [];
-    let rateLimited = false;
-    
-    for (const symbol of SYMBOLS) {
-      try {
-        const response = await fetch(`${FMP_BASE_URL}/quote?symbol=${symbol}&apikey=${apiKey}`);
-        if (response.status === 429) {
-          rateLimited = true;
-          console.warn(`[Market Ticker API] Rate limit reached when fetching ${symbol}`);
-          break;
-        }
-
-        if (!response.ok) {
-          throw new Error(`FMP API error (${symbol}): ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const item = Array.isArray(data) ? data[0] : null;
-        if (!item) {
-          console.warn(`[Market Ticker API] No data returned for ${symbol}`);
-          continue;
-        }
-
-        const formatted: TickerResult = {
-          symbol: item.symbol,
-          price: item.price,
-          change: item.change,
-          changesPercentage: item.changesPercentage || item.changePercentage || 0
-        };
-
-        results.push(formatted);
-      } catch (err) {
-        console.error(`[Market Ticker API] Error fetching ${symbol}:`, err);
-      }
-
-      // 避免命中免费 plan 的速率限制
-      await new Promise(resolve => setTimeout(resolve, 250));
-    }
+    // 使用共享的 fetchTickerFromFMP 函数
+    const { data: results, rateLimited } = await fetchTickerFromFMP(apiKey);
 
     if (rateLimited) {
       // 即使缓存过期，也返回缓存数据（总比没有数据好）
@@ -190,12 +132,6 @@ export const onRequest: PagesFunction = async (context) => {
     if (results.length === 0) {
       if (cached && cached.data.length > 0) {
         console.warn('[Market Ticker API] Using cached ticker data due to fetch failures (0 results)');
-        // 即使获取失败，也更新 timestamp 以标记"最后尝试时间"
-        // 这样可以帮助调试，了解最后一次成功获取的时间
-        const stalePayload: CachePayload = {
-          timestamp: cached.timestamp, // 保持原 timestamp，不更新为 now
-          data: cached.data
-        };
         // 不写入 KV，因为数据没有更新，只是使用旧数据
         return new Response(JSON.stringify(cached.data), {
           status: 200,
