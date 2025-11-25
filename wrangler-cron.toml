@@ -6,6 +6,12 @@ kv_namespaces = [
   { binding = "MARKET_DATA_CACHE", id = "f47995f0fdb143a4b76d073f969e5708" }
 ]
 
+# FMP_API_KEY 需要在 Cloudflare Dashboard 中配置为 Secret
+# Workers > exchange-cron > Settings > Variables > Add variable (Encrypt)
+
 [triggers]
-crons = ["0 6 2 * *"]
+# FMP 免费计划只提供 End of Day 数据，每天刷新一次即可
+# UTC 22:00 = 美东 17:00/18:00 (收盘后 1-2 小时)
+# 每月 2 日 6:00 刷新 Exchange Stats (WFE 交易所统计)
+crons = ["0 22 * * *", "0 6 2 * *"]
 
