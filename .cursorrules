@@ -109,6 +109,17 @@ Cron Worker (UTC 22:00)
 - **错误处理**: 如果 API 调用失败，返回旧缓存数据（总比没有数据好）
 - **日志记录**: 所有关键操作都有日志，便于调试和监控
 
+## 5. 鼠标轨迹动画（Cursor Trail）
+
+- **组件位置**: `components/CursorTrail.tsx`
+- **技术方案**: Canvas 2D + `requestAnimationFrame`，使用 `useRef` 避免 React 重渲染
+- **关键设置**: 
+  - `pointer-events-none`: 不干扰页面交互
+  - `z-50`: 最上层显示
+  - `mixBlendMode: 'screen'`: 增强发光效果
+- **颜色方案**: 随机选择 Cyan-400、Amber-400 或白色，与主题色保持一致
+- **性能**: 及时清理死亡粒子，组件卸载时移除事件监听和取消动画帧
+
 ---
 *Last Updated: 2025-11-25*
 
