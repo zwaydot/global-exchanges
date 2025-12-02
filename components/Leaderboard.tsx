@@ -105,7 +105,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose, butto
                   }}
                 >
                   <td className="p-2 md:p-4 text-slate-400 font-mono w-12 md:w-16 group-hover/row:text-amber-400 transition-colors">
-                    #{index + 1}
+                    {index === 0 ? (
+                      <span className="text-2xl" title="🥇 第 1 名">🥇</span>
+                    ) : index === 1 ? (
+                      <span className="text-2xl" title="🥈 第 2 名">🥈</span>
+                    ) : index === 2 ? (
+                      <span className="text-2xl" title="🥉 第 3 名">🥉</span>
+                    ) : (
+                      `#${index + 1}`
+                    )}
                   </td>
                   <td className="p-2 md:p-4">
                     <div className="font-medium text-white group-hover/row:text-amber-200 transition-colors">{ex.name}</div>
