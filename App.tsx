@@ -3,6 +3,7 @@ import GlobeViz from './components/GlobeViz';
 import DetailPanel from './components/DetailPanel';
 import Ticker from './components/Ticker';
 import { Leaderboard, LeaderboardButton } from './components/Leaderboard';
+import { CursorTrail } from './components/CursorTrail';
 import { STOCK_EXCHANGES } from './constants';
 import { Exchange, ExchangeDetails, ExchangeStatsMeta, ExchangeStatsSnapshot } from './types';
 import { fetchExchangeDetails } from './services/geminiService';
@@ -219,6 +220,9 @@ const App: React.FC = () => {
         isOpen={isLeaderboardOpen} 
         onClose={() => setIsLeaderboardOpen(false)} 
       />
+
+      {/* Cursor Trail Effect */}
+      <CursorTrail />
     </div>
   );
 };
