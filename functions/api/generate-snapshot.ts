@@ -146,11 +146,25 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 async function fetchWeather(lat: number, lon: number) {
   try {
     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,temperature_2m,is_day&timezone=auto`);
-    const data = await res.json() as OpenMeteoResponse & { current?: { time?: string } };
+    const data = await res.json() as OpenMeteoResponse & { current?: { time?: string }; timezone?: string };
     
     const code = data.current?.weather_code ?? 0;
-    const isDay = data.current?.is_day ?? 1;
+    const isDayValue = data.current?.is_day;
     const localTime = data.current?.time; // "2025-12-06T17:15"
+    const timezone = data.timezone;
+    
+    // is_day: 1 = day, 0 = night
+    // If is_day is explicitly 0, it's night. Otherwise, check the time
+    let isDay = true; // Default to day
+    if (isDayValue !== undefined) {
+      isDay = isDayValue === 1;
+    } else if (localTime) {
+      // Fallback: parse local time to determine day/night
+      const hour = parseInt(localTime.split('T')[1]?.split(':')[0] || '12');
+      isDay = hour >= 6 && hour < 20; // 6 AM to 8 PM is day
+    }
+    
+    console.log(`[Weather] lat=${lat}, lon=${lon}, timezone=${timezone}, localTime=${localTime}, is_day=${isDayValue}, calculated isDay=${isDay}`);
     
     let condition = "Clear";
     if (code === 0) condition = "Clear";
@@ -160,10 +174,15 @@ async function fetchWeather(lat: number, lon: number) {
     else if (code >= 71 && code <= 77) condition = "Snowing";
     else if (code >= 95) condition = "Thunderstorm";
     
-    return { condition, temp: data.current?.temperature_2m ?? 20, isDay: !!isDay, localTime };
+    return { condition, temp: data.current?.temperature_2m ?? 20, isDay, localTime };
   } catch (e) {
     console.error("Weather fetch failed:", e);
-    return { condition: "Sunny", temp: 20, isDay: true };
+    // On error, try to determine day/night based on current time in that timezone
+    // For now, default to night if it's likely evening (after 6 PM UTC+8)
+    const now = new Date();
+    const hour = now.getUTCHours() + 8; // UTC+8 for China
+    const isDay = hour >= 6 && hour < 20;
+    return { condition: "Clear", temp: 20, isDay, localTime: null };
   }
 }
 
@@ -408,6 +427,11 @@ async function generateImageWithGeminiRest(apiKey: string, prompt: string) {
   };
 
   console.log(`[Gemini] Calling ${model} via REST...`);
+  
+  // Cloudflare Workers fetch doesn't support AbortController signal in standard way for timeout usually, 
+  // but we can use Promise.race or similar if needed. 
+  // However, CF workers have their own execution limits (usually 30s CPU time).
+  // Let's just add basic logging for now.
   
   const response = await fetch(url, {
     method: 'POST',
