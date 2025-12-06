@@ -399,6 +399,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
   return (
     <Globe
       ref={globeEl}
+      rendererConfig={{ antialias: true }}
       globeImageUrl="https://raw.githubusercontent.com/vasturiano/three-globe/master/example/img/earth-night.jpg"
       backgroundColor="rgba(0,0,0,0)" // Transparent to let CSS background show or custom scene background
       
