@@ -37,18 +37,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // 1. Get Exchange Data
     const mapping = EXCHANGE_MAPPINGS[exchangeName] || DEFAULT_MAPPING;
     
-    // 2. Fetch Data in Parallel
-    const [weatherData, marketData] = await Promise.all([
-      fetchWeather(mapping.lat, mapping.lon),
-      fetchMarketData(
+    // 2. Start Fetching Data (Parallel Optimization)
+    // Start fetching weather and market data immediately
+    const weatherPromise = fetchWeather(mapping.lat, mapping.lon);
+    const marketPromise = fetchMarketData(
         mapping.indexSymbol, 
         mapping.indexName,
         context.env.GEMINI_API_KEY,
         context.env.FMP_API_KEY
-      )
-    ]);
+    );
 
-    // 3. Generate Image Prompt
+    // 3. Wait for Weather ONLY (needed for prompt)
+    const weatherData = await weatherPromise;
+    
+    // 4. Generate Image Prompt
     const dateStr = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', month: 'long', day: 'numeric' 
     });
@@ -91,21 +93,25 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       - Any text, numbers, or labels will break the design
     `;
 
-    // 4. Call Image Generation API (Pure REST)
+    // 5. Start Image Generation (Parallel with Market Data)
     const apiKey = context.env.GEMINI_API_KEY;
-    let imageUrl = null;
-    let imageError = null;
+    const imagePromise = apiKey 
+      ? generateImageWithGeminiRest(apiKey, prompt)
+          .then(url => ({ url, error: null }))
+          .catch(err => {
+            console.error("Image generation failed:", err);
+            return { url: null, error: err instanceof Error ? err.message : String(err) };
+          })
+      : Promise.resolve({ url: null, error: "GEMINI_API_KEY not configured" });
 
-    if (apiKey) {
-      try {
-        imageUrl = await generateImageWithGeminiRest(apiKey, prompt);
-      } catch (err) {
-        console.error("Image generation failed:", err);
-        imageError = err instanceof Error ? err.message : String(err);
-      }
-    } else {
-      imageError = "GEMINI_API_KEY not configured";
-    }
+    // 6. Wait for both Image and Market Data
+    const [marketData, imageResult] = await Promise.all([
+      marketPromise,
+      imagePromise
+    ]);
+
+    const imageUrl = imageResult.url;
+    const imageError = imageResult.error;
 
     return new Response(JSON.stringify({
       exchange: exchangeName,

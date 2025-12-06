@@ -36,18 +36,16 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     ? stats.listedCompanies.total
     : exchange.listedCompanies;
 
-  const dataLabel = statsMeta?.periodLabel ? `As of ${statsMeta.periodLabel}` : 'Approximate values';
-
   return (
     <div className={`
-      fixed z-50 bg-[#0B101B]/95 backdrop-blur-md shadow-[0_0_40px_rgba(0,0,0,0.8)]
-      flex flex-col text-white overflow-hidden transition-transform duration-300
+      bg-[#0B101B]/95 backdrop-blur-md shadow-[0_0_40px_rgba(0,0,0,0.8)]
+      flex flex-col text-white overflow-hidden h-full
       
-      /* Mobile: Bottom Sheet */
-      inset-x-0 bottom-0 h-[65vh] rounded-t-2xl border-t border-amber-500/20
+      /* Mobile: Full Screen / Bottom Sheet behavior handled by parent */
+      w-screen h-screen rounded-none border-t-0
       
       /* Desktop: Right Sidebar */
-      sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:w-96 sm:rounded-none sm:border-l sm:border-t-0
+      md:w-[30rem] md:border-l md:border-white/10
     `}>
       {/* Header */}
       <div className="p-6 border-b border-white/10 flex justify-between items-start relative bg-gradient-to-b from-white/5 to-transparent shrink-0">
@@ -56,7 +54,6 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             {exchange.name}
           </h2>
           <p className="text-gray-400 text-sm mt-1 tracking-wide">{exchange.city}, {exchange.country}</p>
-          <p className="text-[11px] text-gray-500 mt-1">{statsLoading ? 'Updating latest stats…' : dataLabel}</p>
         </div>
         <button 
           onClick={onClose}
@@ -158,8 +155,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       </div>
       
       {/* Footer */}
-      <div className="p-4 border-t border-white/5 bg-[#050a14] text-xs text-gray-600 text-center shrink-0">
-        Data from WFE Focus monthly statistics. Stored in Cloudflare KV.
+      <div className="px-4 py-2 border-t border-white/5 bg-[#050a14] text-xs text-gray-600 text-center shrink-0">
+        Data from WFE Focus monthly statistics.
       </div>
     </div>
   );
