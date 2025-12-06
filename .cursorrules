@@ -120,6 +120,78 @@ Cron Worker (UTC 22:00)
 - **颜色方案**: 随机选择 Cyan-400、Amber-400 或白色，与主题色保持一致
 - **性能**: 及时清理死亡粒子，组件卸载时移除事件监听和取消动画帧
 
+## 6. 交易所快照功能（Exchange Snapshot）
+
+### 6.1 功能概述
+当用户点击交易所名称时，会在详情面板顶部显示一个包含实时天气、市场数据和 3D 建筑场景的垂直卡片。
+
+### 6.2 核心组件
+- **组件位置**: `components/ExchangeSnapshot.tsx`
+- **API 端点**: `functions/api/generate-snapshot.ts` (Cloudflare Pages Function)
+- **本地开发代理**: `vite-plugin-api.ts` 中的 `/api/generate-snapshot` 路由
+- **数据映射**: `lib/exchangeMapping.ts` - 包含所有 88+ 交易所的坐标、指数代码、建筑描述
+
+### 6.3 数据获取流程
+```
+用户点击交易所
+  → ExchangeSnapshot 组件调用 /api/generate-snapshot?exchange={name}
+    → 并行获取：
+      1. Open-Meteo API: 实时天气 + 当地时区时间 (timezone=auto)
+      2. Gemini Flash Latest: 通过 Google Search 获取实时指数数据
+      3. Gemini 3 Pro Image Preview: 生成 3D 建筑场景图片
+    → 返回 JSON: { weather, market, imageUrl }
+```
+
+### 6.4 关键技术点
+
+#### 6.4.1 实时天气与时区
+- **API**: Open-Meteo (`https://api.open-meteo.com/v1/forecast`)
+- **关键参数**: `timezone=auto` - 自动根据经纬度返回当地时区时间
+- **返回字段**: `is_day` (0=夜晚, 1=白天), `time` (ISO 格式本地时间)
+- **用途**: 决定图片生成是白天还是夜景，以及前端文字颜色（白天用黑色，夜晚用白色）
+
+#### 6.4.2 市场指数数据
+- **主要方法**: Gemini Flash Latest (`gemini-flash-latest`) + Google Search 工具
+- **备用方法**: FMP API (仅支持以 `^` 开头的符号，免费版限制较多)
+- **数据格式**: `{ price, change, changePercent }`
+- **JSON 解析**: 使用容错机制，自动修复单引号、未加引号的键等常见错误
+
+#### 6.4.3 3D 图片生成
+- **模型**: `gemini-3-pro-image-preview` (Nano Banana Pro)
+- **Prompt 设计**:
+  - 明确禁止生成任何文字、数字、标签（文字由前端叠加）
+  - 控制天空区域占比（20-25%）为文字预留空间
+  - 根据天气和时间动态调整光照和氛围描述
+- **输出格式**: Base64 data URL (PNG, 1K 分辨率, 3:4 比例)
+
+#### 6.4.4 前端 UI 特性
+- **日夜自适应文字**: 根据 `isDay` 自动切换文字颜色和背景
+- **Shiny Text 效果**: 日期/天气行使用 CSS 渐变动画（2 秒循环）
+- **复制到剪贴板**: 使用 `@zumer/snapdom` 库将整个卡片转为 PNG
+- **状态管理**: Loading → Success/Error，带详细错误提示
+
+### 6.5 环境变量配置
+- **GEMINI_API_KEY**: 必需，用于图片生成和市场数据搜索
+- **FMP_API_KEY**: 可选，作为市场数据的备用方案
+- **本地开发**: 在 `.env` 或 `.dev.vars` 中配置
+- **生产环境**: Cloudflare Pages → Settings → Environment Variables
+
+### 6.6 交易所映射维护
+- **文件**: `lib/exchangeMapping.ts`
+- **关键字段**:
+  - `lat`, `lon`: 用于天气 API 和时区计算
+  - `indexSymbol`: 市场指数代码（如 `^DJI`, `^HSI`）
+  - `indexName`: 显示名称（如 "Dow Jones", "Hang Seng Index"）
+  - `buildingPrompt`: 用于图片生成的建筑描述
+- **命名一致性**: 确保 `constants.ts` 中的交易所名称与映射表的 key 完全匹配
+- **新增交易所**: 需要同时更新 `constants.ts` 和 `exchangeMapping.ts`
+
+### 6.7 最佳实践
+- **缓存策略**: 图片生成较慢，前端使用 timestamp 参数强制刷新
+- **错误处理**: 所有 API 调用都有 try-catch，失败时显示友好错误信息
+- **性能优化**: 并行获取天气和市场数据，减少总等待时间
+- **可访问性**: 图片有 alt 文本，按钮有 title 提示
+
 ---
-*Last Updated: 2025-11-25*
+*Last Updated: 2025-12-06*
 
