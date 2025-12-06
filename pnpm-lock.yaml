@@ -11,6 +11,9 @@ importers:
       '@google/genai':
         specifier: ^1.30.0
         version: 1.30.0
+      '@zumer/snapdom':
+        specifier: ^2.0.1
+        version: 2.0.1
       cheerio:
         specifier: ^1.1.2
         version: 1.1.2
@@ -782,6 +785,9 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
+
+  '@zumer/snapdom@2.0.1':
+    resolution: {integrity: sha512-78/qbYl2FTv4H6qaXcNfAujfIOSzdvs83NW63VbyC9QA3sqNPfPvhn4xYMO6Gy11hXwJUEhd0z65yKiNzDwy9w==}
 
   accessor-fn@1.5.3:
     resolution: {integrity: sha512-rkAofCwe/FvYFUlMB0v0gWmhqtfAtV1IUkdPbfhTUyYniu5LrC0A0UJkTH0Jv3S8SvwkmfuAlY+mQIJATdocMA==}
@@ -2173,6 +2179,8 @@ snapshots:
       vite: 6.4.1(@types/node@22.19.1)
     transitivePeerDependencies:
       - supports-color
+
+  '@zumer/snapdom@2.0.1': {}
 
   accessor-fn@1.5.3: {}
 
