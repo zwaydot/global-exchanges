@@ -189,7 +189,7 @@ const App: React.FC = () => {
       </article>
 
       {/* Main Visualization */}
-      <main className="w-full h-full">
+      <main className={`w-full h-full transition-all duration-500 ease-in-out ${selectedExchange ? 'pr-[38%] translate-x-[-19%]' : ''}`}>
         <GlobeViz 
           exchanges={STOCK_EXCHANGES} 
           onSelect={handleExchangeSelect} 
@@ -197,20 +197,23 @@ const App: React.FC = () => {
       </main>
 
       {/* Side Panel */}
-      {selectedExchange && (
-        <aside aria-label="Exchange Details Panel">
-          <DetailPanel 
-            exchange={selectedExchange} 
-            details={details} 
-            isLoading={isLoading}
-            stats={statsByExchange[selectedExchange.id]}
-            statsMeta={statsMeta}
-            statsLoading={statsLoadingExchange === selectedExchange.id && !statsByExchange[selectedExchange.id]}
-            statsError={statsError}
-            onClose={closePanel}
-          />
-        </aside>
-      )}
+      <aside 
+        aria-label="Exchange Details Panel"
+        className={`fixed top-0 right-0 h-full z-30 transition-transform duration-500 ease-in-out ${
+          selectedExchange ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <DetailPanel 
+          exchange={selectedExchange} 
+          details={details} 
+          isLoading={isLoading}
+          stats={selectedExchange ? statsByExchange[selectedExchange.id] : null}
+          statsMeta={statsMeta}
+          statsLoading={selectedExchange ? (statsLoadingExchange === selectedExchange.id && !statsByExchange[selectedExchange.id]) : false}
+          statsError={statsError}
+          onClose={closePanel}
+        />
+      </aside>
       
       {/* Financial Ticker */}
       <Ticker />
