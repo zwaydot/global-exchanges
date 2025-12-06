@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import snapdom from '@zumer/snapdom';
+import { snapdom } from '@zumer/snapdom';
 
 interface SnapshotData {
   exchange: string;
@@ -23,6 +23,9 @@ interface ExchangeSnapshotProps {
   exchangeName: string;
 }
 
+// 模块级缓存：同一交易所的在途/已完成请求共用一份 Promise（避免 Strict Mode 双请求）
+const snapshotPromiseCache: Record<string, Promise<SnapshotData>> = {};
+
 export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<SnapshotData | null>(null);
@@ -30,50 +33,61 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
   const [error, setError] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [copyErrorMessage, setCopyErrorMessage] = useState<string | null>(null);
-
+  
   useEffect(() => {
     let mounted = true;
-    
-    const fetchData = async () => {
+
+    const fetchSnapshot = async (): Promise<SnapshotData> => {
+      const t = Date.now(); // 加时间戳防缓存
+      const res = await fetch(`/api/generate-snapshot?exchange=${encodeURIComponent(exchangeName)}&t=${t}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({})) as { error?: string | { message: string } };
+        let msg = 'Server error';
+        if (typeof errorData.error === 'string') {
+          msg = errorData.error;
+        } else if (errorData.error && typeof errorData.error === 'object' && 'message' in errorData.error) {
+          msg = errorData.error.message;
+        } else {
+          msg = `Server error: ${res.status}`;
+        }
+        throw new Error(msg);
+      }
+      return res.json() as Promise<SnapshotData>;
+    };
+
+    const run = async () => {
       setLoading(true);
       setError(null);
+
+      let promise: Promise<SnapshotData>;
+      if (snapshotPromiseCache[exchangeName]) {
+        promise = snapshotPromiseCache[exchangeName];
+      } else {
+        promise = fetchSnapshot().catch(err => {
+          // 如果失败，清理缓存，避免下一次仍复用错误 Promise
+          delete snapshotPromiseCache[exchangeName];
+          throw err;
+        });
+        snapshotPromiseCache[exchangeName] = promise;
+      }
+
       try {
-        // Add timestamp to bypass caching
-        const t = Date.now();
-        const res = await fetch(`/api/generate-snapshot?exchange=${encodeURIComponent(exchangeName)}&t=${t}`);
-        
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({})) as { error?: string | { message: string } };
-          // Handle Google-style error object or simple error string
-          let msg = 'Server error';
-          if (typeof errorData.error === 'string') {
-            msg = errorData.error;
-          } else if (errorData.error && typeof errorData.error === 'object' && 'message' in errorData.error) {
-            msg = errorData.error.message;
-          } else {
-            msg = `Server error: ${res.status}`;
-          }
-          throw new Error(msg);
-        }
-        
-        const json = await res.json();
-        console.log('[ExchangeSnapshot] Received data:', json);
-        console.log('[ExchangeSnapshot] Market data:', json.market);
-        if (mounted) setData(json);
+        const json = await promise;
+        if (!mounted) return;
+        setData(json);
       } catch (err) {
-        console.error(err);
-        if (mounted) {
-          setError(err instanceof Error ? err.message : 'Could not load snapshot');
-        }
+        if (!mounted) return;
+        setError(err instanceof Error ? err.message : 'Could not load snapshot');
       } finally {
-        if (mounted) setLoading(false);
+        if (!mounted) return;
+        setLoading(false);
       }
     };
 
-    if (exchangeName) {
-      fetchData();
-    }
+    if (exchangeName) run();
 
+    // 不清空 inflightRef，Strict Mode 重挂载仍可复用
     return () => { mounted = false; };
   }, [exchangeName]);
 
@@ -84,19 +98,22 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
     setCopyErrorMessage(null);
 
     try {
-      // Use snapdom to capture the container
-      // Note: snapdom returns a Promise<CaptureResult>, so we must await it or use the static helper
-      const blob = await snapdom.toBlob(containerRef.current, { 
-        type: 'image/png', 
-        scale: 2, // Scale 2x for better quality
-        exclude: ['.copy-btn'] // Exclude the copy button from the image
-      });
+      // Capture as PNG blob (force type to png to avoid svg fallback)
+      const blob = await snapdom.toBlob(containerRef.current, {
+        type: 'image/png',
+        scale: 2,
+        exclude: ['.copy-btn']
+      } as any);
 
       if (!blob) throw new Error('Failed to generate image');
 
-      // Write to clipboard
+      // If snapdom still returns non-png, normalize to png
+      const pngBlob = blob.type === 'image/png'
+        ? blob
+        : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
+
       await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob })
+        new ClipboardItem({ 'image/png': pngBlob })
       ]);
 
       setCopyStatus('success');
@@ -142,12 +159,43 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
   // Default to day if undefined (retroactive compatibility)
   const isDay = data.weather.isDay !== false; 
 
+  // Fallbacks for date / weather to avoid missing year or temperature
+  const rawDate = data.market?.date;
+  const fallbackDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const displayDate = (() => {
+    if (!rawDate) return fallbackDate;
+    // Normalize whitespace
+    let normalized = rawDate.trim().replace(/\s+/g, ' ');
+    // Check if year exists (4-digit year)
+    const hasYear = /\b\d{4}\b/.test(normalized);
+    if (!hasYear) {
+      // Add year at the end, with comma if needed
+      const year = new Date().getFullYear();
+      // Check if there's a comma before adding year
+      if (normalized.endsWith(',')) {
+        normalized = `${normalized} ${year}`;
+      } else {
+        // Add comma before year for proper formatting
+        normalized = `${normalized}, ${year}`;
+      }
+    }
+    return normalized;
+  })();
+  const tempText = typeof data.weather.temp === 'number' && !Number.isNaN(data.weather.temp)
+    ? `${data.weather.temp}°C`
+    : '';
+  const displayWeather = data.weather.condition
+    ? tempText ? `${data.weather.condition} ${tempText}` : data.weather.condition
+    : tempText || '—';
+
   const textTheme = {
-    title: isDay ? 'text-black' : 'text-white drop-shadow-md',
-    subtitle: isDay ? 'text-[#666]' : 'text-white/80 drop-shadow-sm',
-    tagBg: isDay ? 'bg-white/30 border-black/5' : 'bg-black/40 border-white/10',
-    tagText: isDay ? 'text-black' : 'text-white',
-    tagBorder: isDay ? 'border-black/5' : 'border-white/10',
+    // 白天模式：使用深蓝灰色（slate-800），比纯黑更细腻，带微妙蓝调
+    // 夜间模式：保持白色以确保对比度
+    title: isDay ? 'text-[#111]' : 'text-white drop-shadow-md',
+    subtitle: isDay ? 'text-[#475569]' : 'text-white/80 drop-shadow-sm',
+    tagBg: isDay ? 'bg-white/30 border-slate-200/10' : 'bg-black/40 border-white/10',
+    tagText: isDay ? 'text-[#111]' : 'text-white',
+    tagBorder: isDay ? 'border-slate-200/10' : 'border-white/10',
   };
 
   const isPositive = data.market.change >= 0;
@@ -217,9 +265,9 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
 
       {/* Header Text Overlay */}
       <div className="absolute top-0 left-0 w-full z-20 p-6 pt-8">
-        <div className="flex flex-col items-center text-center space-y-2">
+        <div className="flex flex-col items-center text-center space-y-1.5">
           {/* Line 1: Exchange Name */}
-          <h2 className={`text-2xl font-bold tracking-tight whitespace-nowrap transition-colors duration-300 ${textTheme.title}`}>
+          <h2 className={`text-xl md:text-2xl font-bold tracking-tight whitespace-nowrap transition-colors duration-300 ${textTheme.title}`}>
             {data.exchange}
           </h2>
           
@@ -232,25 +280,25 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
               }
             `}</style>
             <div 
-              className={`flex items-center gap-3 text-xs font-medium bg-clip-text text-transparent bg-gradient-to-r bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite] ${
+              className={`flex items-center gap-2 text-[11px] md:text-xs font-medium font-num bg-clip-text text-transparent bg-gradient-to-r bg-[length:200%_auto] animate-[shimmer_2s_linear_infinite] whitespace-nowrap ${
                 isDay 
-                  ? 'from-[#444] via-[#999] to-[#444]' 
-                  : 'from-white/60 via-white to-white/60 drop-shadow-sm'
+                  ? 'from-[#475569] via-[#888] to-[#475569]' 
+                  : 'from-white/75 via-white to-white/75 drop-shadow-sm'
               }`}
             >
-              <span>{data.market.date}</span>
+              <span>{displayDate}</span>
               <span>•</span>
-              <span>{data.weather.condition} {data.weather.temp}°C</span>
+              <span>{displayWeather}</span>
             </div>
           </div>
           
           {/* Line 3: Index Data - Liquid Glass Effect */}
-          <div className={`flex items-center gap-1.5 text-xs backdrop-blur-md px-2.5 py-0.5 rounded-full border transition-all duration-300 whitespace-nowrap ${textTheme.tagBg} ${textTheme.tagBorder}`}>
-            <span className={`font-medium ${textTheme.tagText}`}>
+          <div className={`flex items-center gap-1.5 text-[11px] md:text-xs font-medium font-num backdrop-blur-md px-2.5 py-0.5 rounded-full border transition-all duration-300 whitespace-nowrap ${textTheme.tagBg} ${textTheme.tagBorder}`}>
+            <span className={`${textTheme.tagText} font-num`}>
               {data.market.indexName}: {data.market.price > 0 ? data.market.price.toLocaleString() : 'Loading...'}
             </span>
             {data.market.price > 0 && (
-              <span className={`font-bold ${changeColor}`}>
+              <span className={`font-semibold font-num ${changeColor}`}>
                 ({isPositive ? '+' : ''}{data.market.changePercent.toFixed(2)}%)
               </span>
             )}

@@ -70,7 +70,7 @@ export const EXCHANGE_MAPPINGS: Record<string, ExchangeMapping> = {
     lon: 121.505,
     indexSymbol: "000001.SS",
     indexName: "SSE Composite",
-    buildingPrompt: "The modern Shanghai Stock Exchange building in the Lujiazui financial district with its distinctive open-book architecture."
+    buildingPrompt: "The Shanghai Stock Exchange's new office building - Shanghai International Financial Center in Lujiazui. Two tall, modern towers connected by a prominent skybridge or lower connecting section, forming a distinctive 'Gate of Finance' architectural gateway. The towers feature dark reflective glass and silver-white metal panel facades with a grid pattern, creating a sleek, contemporary appearance that opens towards Century Square."
   },
   "Euronext": {
     city: "Amsterdam",

@@ -44,6 +44,12 @@ const App: React.FC = () => {
   }, []);
 
   const loadStatsForExchange = useCallback(async (exchange: Exchange) => {
+    // 开发环境下跳过远程 stats 请求（本地没有 Cloudflare Functions，避免控制台报错）
+    if ((import.meta as any).env?.DEV) {
+      setStatsByExchange(prev => ({ ...prev, [exchange.id]: null }));
+      return;
+    }
+
     if (statsByExchange[exchange.id]) {
       setStatsError(null);
       return;
@@ -189,7 +195,7 @@ const App: React.FC = () => {
       </article>
 
       {/* Main Visualization */}
-      <main className={`w-full h-full transition-all duration-500 ease-in-out ${selectedExchange ? 'pr-[38%] translate-x-[-19%]' : ''}`}>
+      <main className={`w-full h-full transition-all duration-500 ease-in-out flex items-center justify-center ${selectedExchange ? 'md:pr-[30rem]' : ''}`}>
         <GlobeViz 
           exchanges={STOCK_EXCHANGES} 
           onSelect={handleExchangeSelect} 

@@ -99,8 +99,22 @@ export function apiProxy(): Plugin {
                  const d = await r.json();
                  
                  const code = d.current?.weather_code ?? 0;
-                 const isDay = d.current?.is_day ?? 1;
+                 const isDayValue = d.current?.is_day;
                  const localTime = d.current?.time;
+                 const timezone = d.timezone;
+                 
+                 // is_day: 1 = day, 0 = night
+                 // If is_day is explicitly 0, it's night. Otherwise, check the time
+                 let isDay = true; // Default to day
+                 if (isDayValue !== undefined) {
+                   isDay = isDayValue === 1;
+                 } else if (localTime) {
+                   // Fallback: parse local time to determine day/night
+                   const hour = parseInt(localTime.split('T')[1]?.split(':')[0] || '12');
+                   isDay = hour >= 6 && hour < 20; // 6 AM to 8 PM is day
+                 }
+                 
+                 console.log(`[Weather] lat=${lat}, lon=${lon}, timezone=${timezone}, localTime=${localTime}, is_day=${isDayValue}, calculated isDay=${isDay}`);
                  
                  let condition = "Clear";
                  if (code === 0) condition = "Clear";
@@ -111,8 +125,15 @@ export function apiProxy(): Plugin {
                  else if (code >= 95) condition = "Thunderstorm";
                  
                  // @ts-ignore
-                 return { condition, temp: d.current?.temperature_2m ?? 20, isDay: !!isDay, localTime };
-               } catch { return { condition: "Sunny", temp: 20, isDay: true }; }
+                 return { condition, temp: d.current?.temperature_2m ?? 20, isDay, localTime };
+               } catch (e) {
+                 console.error("Weather fetch failed:", e);
+                 // On error, try to determine day/night based on current time in that timezone
+                 const now = new Date();
+                 const hour = now.getUTCHours() + 8; // UTC+8 for China
+                 const isDay = hour >= 6 && hour < 20;
+                 return { condition: "Clear", temp: 20, isDay, localTime: null };
+               }
             };
             
             function getWeatherInstruction(condition: string, isDay: boolean) {
@@ -296,11 +317,17 @@ export function apiProxy(): Plugin {
               };
 
               console.log(`[API Proxy] Generating image via REST (${model})...`);
+              
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
               imagePromise = fetch(geminiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: controller.signal
               }).then(async (gRes) => {
+                 clearTimeout(timeoutId);
                  if (!gRes.ok) {
                    const txt = await gRes.text();
                    const err = `Gemini API Error: ${gRes.status} - ${txt}`;
@@ -311,6 +338,7 @@ export function apiProxy(): Plugin {
                    // @ts-ignore
                    const part = json.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
                    if (part) {
+                     console.log(`[API Proxy] Image generated successfully`);
                      return { 
                        imageUrl: `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`,
                        imageError: null
@@ -320,8 +348,9 @@ export function apiProxy(): Plugin {
                    }
                  }
               }).catch(e => {
+                 clearTimeout(timeoutId);
                  const msg = e instanceof Error ? e.message : String(e);
-                 console.error(msg);
+                 console.error(`[API Proxy] Image generation failed: ${msg}`);
                  return { imageUrl: null, imageError: msg };
               });
             } else {
@@ -330,6 +359,8 @@ export function apiProxy(): Plugin {
 
             // 5. Wait for both
             const [marketData, imageResult] = await Promise.all([marketPromise, imagePromise]);
+
+            console.log(`[API Proxy] Data ready, sending response. Image size: ${imageResult.imageUrl?.length || 0} chars`);
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
@@ -340,6 +371,7 @@ export function apiProxy(): Plugin {
               imageUrl: imageResult.imageUrl,
               imageError: imageResult.imageError
             }));
+            console.log('[API Proxy] Response sent');
             return;
           } catch (e) {
             console.error(e);
