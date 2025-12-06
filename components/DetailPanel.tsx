@@ -39,7 +39,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   return (
     <div className={`
       bg-[#0B101B]/95 backdrop-blur-md shadow-[0_0_40px_rgba(0,0,0,0.8)]
-      flex flex-col text-white overflow-hidden h-full
+      flex flex-col text-white overflow-hidden h-full font-sans
       
       /* Mobile: Full Screen / Bottom Sheet behavior handled by parent */
       w-screen h-screen rounded-none border-t-0
@@ -48,12 +48,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       md:w-[30rem] md:border-l md:border-white/10
     `}>
       {/* Header */}
-      <div className="p-6 border-b border-white/10 flex justify-between items-start relative bg-gradient-to-b from-white/5 to-transparent shrink-0">
+      <div className="px-4 py-3 md:px-5 md:py-4 border-b border-white/10 flex justify-between items-start relative bg-gradient-to-b from-white/5 to-transparent shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-cyan-300 drop-shadow-sm">
+          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-cyan-300 drop-shadow-sm leading-tight">
             {exchange.name}
           </h2>
-          <p className="text-gray-400 text-sm mt-1 tracking-wide">{exchange.city}, {exchange.country}</p>
+          <p className="text-gray-400 text-sm mt-1 tracking-wide leading-tight">{exchange.city}, {exchange.country}</p>
         </div>
         <button 
           onClick={onClose}
@@ -94,7 +94,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           />
           <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors">
             <p className="text-xs text-gray-500 uppercase tracking-wider">Currency</p>
-            <p className="text-lg font-semibold text-emerald-300">{exchange.currency}</p>
+            <p className="text-lg font-semibold text-emerald-300 font-num">{exchange.currency}</p>
           </div>
         </div>
 
@@ -104,9 +104,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           </div>
         )}
 
-        <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors mb-8">
+          <div className="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-amber-500/30 transition-colors mb-8">
           <p className="text-xs text-gray-500 uppercase tracking-wider">Trading Hours</p>
-          <p className="text-sm font-semibold text-yellow-400">
+            <p className="text-sm font-semibold text-yellow-400 font-num">
             {isLoading ? '...' : details?.tradingHours || 'N/A'}
           </p>
         </div>
@@ -179,10 +179,10 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, accent, loading, chan
         <div className="mt-2 h-5 bg-white/10 rounded animate-pulse" />
       ) : (
         <>
-          <p className={`text-lg font-semibold ${accent}`}>{value}</p>
-          {subValue && <p className="text-[11px] text-gray-400 mt-1">{subValue}</p>}
+          <p className={`text-lg font-semibold font-num ${accent}`}>{value}</p>
+          {subValue && <p className="text-[11px] text-gray-400 mt-1 font-num">{subValue}</p>}
           {typeof change === 'number' && (
-            <p className={`text-[11px] mt-1 ${change >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+            <p className={`text-[11px] mt-1 font-num ${change >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
               {change >= 0 ? '▲' : '▼'} {Math.abs(change).toFixed(1)}% MoM
             </p>
           )}

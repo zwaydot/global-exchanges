@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/geist": "^5.0.10",
+    "@fontsource/geist-mono": "^5.0.10",
     "@google/genai": "^1.30.0",
     "@zumer/snapdom": "^2.0.1",
     "cheerio": "^1.1.2",

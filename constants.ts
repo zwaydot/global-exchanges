@@ -817,7 +817,7 @@ export const STOCK_EXCHANGES: Exchange[] = [
     monthlyTradeValueBillionUSD: 5, marketCapTrillionUSD: 0.25, listedCompanies: 280, currency: 'PHP'
   },
   {
-    id: 'dse',
+    id: 'dse-bd',
     wfeName: 'Dhaka Stock Exchange',
     name: 'Dhaka Stock Exchange',
     city: 'Dhaka',
