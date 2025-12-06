@@ -46,14 +46,25 @@
 
     <!-- Fonts & Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter 可作为备选字体，Geist 通过 @fontsource 注入 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+      :root {
+        --font-sans: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+        --font-mono: 'Geist Mono', 'SFMono-Regular', ui-monospace, 'Roboto Mono', monospace;
+      }
+      html {
+        font-family: var(--font-sans);
+      }
       body {
-        font-family: 'Inter', sans-serif;
+        font-family: var(--font-sans);
         background-color: #020617; /* Deep cosmic blue match */
         margin: 0;
         overflow: hidden;
+      }
+      .font-num {
+        font-family: var(--font-mono);
       }
       /* Utility for Screen Reader Only / SEO Content */
       .sr-only {
