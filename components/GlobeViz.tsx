@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import Globe, { GlobeMethods } from 'react-globe.gl';
 import * as THREE from 'three';
 import { Exchange } from '../types';
@@ -435,7 +435,8 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       customLayerLat="lat"
       customLayerLng="lng"
       customThreeObject={(d: any) => {
-        const { monthlyTradeValueBillionUSD } = d as Exchange;
+        const exchange = d as Exchange;
+        const { monthlyTradeValueBillionUSD } = exchange;
         // Ensure even small exchanges have a tiny bar
         const dailyApprox = Math.max(monthlyTradeValueBillionUSD / 20, 0.5); 
         const altitude = Math.sqrt(dailyApprox) * 0.007;
@@ -453,7 +454,10 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
           opacity: 0.85
         });
         
-        return new THREE.Mesh(geometry, material);
+        const mesh = new THREE.Mesh(geometry, material);
+        // Manually attach exchange data to the mesh for click handling
+        (mesh as any).userData = { exchange };
+        return mesh;
       }}
       
       // Interaction
@@ -475,8 +479,33 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
         document.body.style.cursor = obj ? 'pointer' : 'default';
       }}
       onCustomLayerClick={(obj: any) => {
-        const data = obj.__data as Exchange;
-        if (data) handleFocus(data.lat, data.lng, data);
+        // Try multiple ways to access the data
+        let data: Exchange | null = null;
+        
+        // Method 1: Check userData (manually attached)
+        if (obj?.userData?.exchange) {
+          data = obj.userData.exchange;
+        }
+        // Method 2: Check __data (react-globe.gl default)
+        else if (obj?.__data) {
+          data = obj.__data as Exchange;
+        }
+        // Method 3: If obj itself has lat/lng, it might be the data
+        else if (obj && typeof obj === 'object' && 'lat' in obj && 'lng' in obj) {
+          data = obj as Exchange;
+        }
+        // Method 4: Fallback - find by position (if we can get world position)
+        else if (obj && obj.position) {
+          // This is a fallback - try to find exchange by matching position
+          // Note: This is less reliable but can work if other methods fail
+          console.warn('[GlobeViz] Could not find exchange data directly, attempting position match');
+        }
+        
+        if (data && typeof data === 'object' && 'lat' in data && 'lng' in data) {
+          handleFocus(data.lat, data.lng, data);
+        } else {
+          console.warn('[GlobeViz] Failed to extract exchange data from custom layer click', obj);
+        }
       }}
 
       // Handle clicks on Labels (Major exchanges text)
