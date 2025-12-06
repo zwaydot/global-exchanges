@@ -238,10 +238,12 @@ export function apiProxy(): Plugin {
               return { price: 0, change: 0, changePercent: 0 };
             };
 
-            const [weatherData, marketData] = await Promise.all([
-              fetchWeather(mapping.lat, mapping.lon),
-              fetchMarket(mapping.indexSymbol, mapping.indexName, finalApiKey, fmpApiKey)
-            ]);
+            // 2. Start Fetching Data (Parallel Optimization)
+            const weatherPromise = fetchWeather(mapping.lat, mapping.lon);
+            const marketPromise = fetchMarket(mapping.indexSymbol, mapping.indexName, finalApiKey, fmpApiKey);
+
+            // 3. Wait for Weather ONLY
+            const weatherData = await weatherPromise;
 
             const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             const weatherDesc = weatherData.condition;
@@ -278,52 +280,56 @@ export function apiProxy(): Plugin {
               - Any text, numbers, or labels will break the design
             `;
 
-            let imageUrl = null;
-            let imageError = null;
-
+            // 4. Start Image Generation (Parallel with Market Data)
+            let imagePromise: Promise<{ imageUrl: string | null, imageError: string | null }>;
+            
             if (finalApiKey) {
-              try {
-                const model = 'gemini-3-pro-image-preview';
-                // Using generateContent endpoint as per documentation for this model
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${finalApiKey}`;
-                
-                const payload = {
-                  contents: [{ parts: [{ text: prompt }] }],
-                  generationConfig: {
-                    responseModalities: ["IMAGE"],
-                    imageConfig: { aspectRatio: "3:4", imageSize: "1K" }
-                  }
-                };
-
-                console.log(`[API Proxy] Generating image via REST (${model})...`);
-                const gRes = await fetch(geminiUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(payload)
-                });
-
-                if (!gRes.ok) {
-                  const txt = await gRes.text();
-                  imageError = `Gemini API Error: ${gRes.status} - ${txt}`;
-                  console.error(imageError);
-                } else {
-                  const json = await gRes.json();
-                  // Parse: candidates[0].content.parts[0].inlineData
-                  // @ts-ignore
-                  const part = json.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-                  if (part) {
-                    imageUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
-                  } else {
-                    imageError = "No image data found in response";
-                  }
+              const model = 'gemini-3-pro-image-preview';
+              const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${finalApiKey}`;
+              
+              const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  responseModalities: ["IMAGE"],
+                  imageConfig: { aspectRatio: "3:4", imageSize: "1K" }
                 }
-              } catch (e) {
-                imageError = e instanceof Error ? e.message : String(e);
-                console.error(imageError);
-              }
+              };
+
+              console.log(`[API Proxy] Generating image via REST (${model})...`);
+              imagePromise = fetch(geminiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              }).then(async (gRes) => {
+                 if (!gRes.ok) {
+                   const txt = await gRes.text();
+                   const err = `Gemini API Error: ${gRes.status} - ${txt}`;
+                   console.error(err);
+                   return { imageUrl: null, imageError: err };
+                 } else {
+                   const json = await gRes.json();
+                   // @ts-ignore
+                   const part = json.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                   if (part) {
+                     return { 
+                       imageUrl: `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`,
+                       imageError: null
+                     };
+                   } else {
+                     return { imageUrl: null, imageError: "No image data found in response" };
+                   }
+                 }
+              }).catch(e => {
+                 const msg = e instanceof Error ? e.message : String(e);
+                 console.error(msg);
+                 return { imageUrl: null, imageError: msg };
+              });
             } else {
-              imageError = "GEMINI_API_KEY not configured";
+              imagePromise = Promise.resolve({ imageUrl: null, imageError: "GEMINI_API_KEY not configured" });
             }
+
+            // 5. Wait for both
+            const [marketData, imageResult] = await Promise.all([marketPromise, imagePromise]);
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
@@ -331,8 +337,8 @@ export function apiProxy(): Plugin {
               mapping,
               weather: weatherData,
               market: { ...marketData, indexName: mapping.indexName, date: dateStr },
-              imageUrl,
-              imageError
+              imageUrl: imageResult.imageUrl,
+              imageError: imageResult.imageError
             }));
             return;
           } catch (e) {

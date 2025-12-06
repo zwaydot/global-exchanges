@@ -157,7 +157,7 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
     : (isDay ? 'text-red-600' : 'text-red-400');
 
   return (
-    <div ref={containerRef} className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-white/10 shadow-2xl mb-6 bg-black group">
+    <div ref={containerRef} className="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-2xl mb-6 bg-black group">
       {/* Background Image - Sharp, no effects */}
       {data.imageUrl ? (
         <img 
@@ -216,10 +216,10 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
       )}
 
       {/* Header Text Overlay */}
-      <div className="absolute top-0 left-0 w-full z-20 p-6 pt-4">
+      <div className="absolute top-0 left-0 w-full z-20 p-6 pt-8">
         <div className="flex flex-col items-center text-center space-y-2">
           {/* Line 1: Exchange Name */}
-          <h2 className={`text-lg font-bold tracking-tight whitespace-nowrap transition-colors duration-300 ${textTheme.title}`}>
+          <h2 className={`text-2xl font-bold tracking-tight whitespace-nowrap transition-colors duration-300 ${textTheme.title}`}>
             {data.exchange}
           </h2>
           
@@ -232,10 +232,10 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
               }
             `}</style>
             <div 
-              className={`flex items-center gap-3 text-[10px] font-medium bg-clip-text text-transparent bg-gradient-to-r bg-[length:200%_auto] animate-[shimmer_2s_linear_infinite] ${
+              className={`flex items-center gap-3 text-xs font-medium bg-clip-text text-transparent bg-gradient-to-r bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite] ${
                 isDay 
-                  ? 'from-[#555] via-[#999] to-[#555]' 
-                  : 'from-white/50 via-white to-white/50 drop-shadow-sm'
+                  ? 'from-[#444] via-[#999] to-[#444]' 
+                  : 'from-white/60 via-white to-white/60 drop-shadow-sm'
               }`}
             >
               <span>{data.market.date}</span>
@@ -245,7 +245,7 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
           </div>
           
           {/* Line 3: Index Data - Liquid Glass Effect */}
-          <div className={`flex items-center gap-1.5 text-[10px] backdrop-blur-md px-2.5 py-0.5 rounded-full border transition-all duration-300 ${textTheme.tagBg} ${textTheme.tagBorder}`}>
+          <div className={`flex items-center gap-1.5 text-xs backdrop-blur-md px-2.5 py-0.5 rounded-full border transition-all duration-300 whitespace-nowrap ${textTheme.tagBg} ${textTheme.tagBorder}`}>
             <span className={`font-medium ${textTheme.tagText}`}>
               {data.market.indexName}: {data.market.price > 0 ? data.market.price.toLocaleString() : 'Loading...'}
             </span>
