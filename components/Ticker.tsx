@@ -28,11 +28,15 @@ const Ticker: React.FC = () => {
           setData(result);
         } else {
           // Use fallback if empty result
-          console.warn('Ticker: No data received, using fallback');
+          if (import.meta.env.DEV) {
+            console.warn('Ticker: No data received, using fallback');
+          }
           setData(fallbackData);
         }
       } catch (error) {
-        console.error('Failed to load ticker data', error);
+        if (import.meta.env.DEV) {
+          console.error('Failed to load ticker data', error);
+        }
         setData(fallbackData);
       } finally {
         setIsLoading(false);
@@ -64,8 +68,8 @@ const Ticker: React.FC = () => {
         {tickerItems.map((item, index) => (
           <div key={`${item.symbol}-${index}`} className="flex items-center mx-6 text-xs md:text-sm font-mono">
             <span className="font-bold text-white mr-2">{item.symbol}</span>
-            <span className="text-gray-300 mr-2">{formatPrice(item.symbol, item.price)}</span>
-            <span className={`${item.change >= 0 ? 'text-emerald-400' : 'text-rose-400'} flex items-center`}>
+            <span className="text-gray-300 mr-2 font-num">{formatPrice(item.symbol, item.price)}</span>
+            <span className={`${item.change >= 0 ? 'text-emerald-400' : 'text-rose-400'} flex items-center font-num`}>
               <span className="mr-1">{item.change >= 0 ? '▲' : '▼'}</span>
               {Math.abs(item.changesPercentage).toFixed(2)}%
             </span>
