@@ -113,7 +113,60 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
         ? blob
         : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
 
-      // 尝试使用剪贴板 API（优先）
+      // 检测是否为移动端
+      const isMobile = /iphone|ipad|ipod|android|mobile/i.test(navigator.userAgent);
+      
+      // 移动端：直接使用全屏显示方案（最可靠）
+      if (isMobile) {
+        const url = URL.createObjectURL(pngBlob);
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain; z-index: 9999; background: rgba(0,0,0,0.95); cursor: pointer; touch-action: none;';
+        img.alt = '长按保存图片';
+        
+        // 点击或触摸关闭
+        const close = () => {
+          if (document.body.contains(img)) {
+            document.body.removeChild(img);
+            URL.revokeObjectURL(url);
+          }
+        };
+        img.onclick = close;
+        img.ontouchstart = (e) => {
+          // 长按检测
+          const timer = setTimeout(() => {
+            // 长按超过 500ms，显示提示
+            const tip = document.createElement('div');
+            tip.textContent = '长按图片保存到相册';
+            tip.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 8px; z-index: 10000; font-size: 14px; pointer-events: none;';
+            document.body.appendChild(tip);
+            setTimeout(() => {
+              if (document.body.contains(tip)) {
+                document.body.removeChild(tip);
+              }
+            }, 2000);
+          }, 500);
+          
+          img.ontouchend = () => {
+            clearTimeout(timer);
+            // 短按关闭
+            setTimeout(close, 100);
+          };
+          e.preventDefault();
+        };
+        
+        document.body.appendChild(img);
+        trackCopyImage(exchangeName);
+        setCopyStatus('success');
+        setCopyErrorMessage('图片已显示，长按保存');
+        setTimeout(() => {
+          setCopyStatus('idle');
+          setCopyErrorMessage(null);
+        }, 3000);
+        return;
+      }
+
+      // 桌面端：尝试使用剪贴板 API
       const tryClipboard = async (): Promise<boolean> => {
         try {
           if (typeof navigator !== 'undefined' 
@@ -126,7 +179,6 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
             return true;
           }
         } catch (e) {
-          // 剪贴板失败，返回 false 使用 fallback
           console.debug('Clipboard write failed, using fallback:', e);
         }
         return false;
@@ -139,24 +191,23 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
         setCopyStatus('success');
         setTimeout(() => setCopyStatus('idle'), 2000);
       } else {
-        // Fallback：在页面中显示图片，让用户长按保存（移动端最可靠）
+        // 桌面端 fallback：下载图片
         const url = URL.createObjectURL(pngBlob);
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain; z-index: 9999; background: rgba(0,0,0,0.9); cursor: pointer;';
-        img.onclick = () => {
-          document.body.removeChild(img);
-          URL.revokeObjectURL(url);
-        };
-        document.body.appendChild(img);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${exchangeName || 'snapshot'}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
         
         trackCopyImage(exchangeName);
         setCopyStatus('success');
-        setCopyErrorMessage('图片已显示，请长按保存');
+        setCopyErrorMessage('图片已下载');
         setTimeout(() => {
           setCopyStatus('idle');
           setCopyErrorMessage(null);
-        }, 3000);
+        }, 2000);
       }
     } catch (err) {
       console.error('Copy failed:', err);
