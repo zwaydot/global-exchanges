@@ -507,8 +507,6 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
         }
         
         if (data && typeof data === 'object' && 'lat' in data && 'lng' in data) {
-          // 追踪标记柱点击（3D 柱子）
-          trackMarkerClick(data.id, data.name);
           handleFocus(data.lat, data.lng, data, 'custom_layer');
         } else {
           console.warn('[GlobeViz] Failed to extract exchange data from custom layer click', obj);
