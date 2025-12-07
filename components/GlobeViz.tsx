@@ -81,8 +81,8 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
             if (renderer) {
                 // 设置高像素比率以提升清晰度（特别是高DPI屏幕）
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                // 确保抗锯齿已启用
-                if (!renderer.antialias) {
+                // 仅在开发环境提示抗锯齿状态，避免生产控制台噪声
+                if (!renderer.antialias && (import.meta as any)?.env?.DEV) {
                     console.warn('Renderer antialias not enabled');
                 }
             }
