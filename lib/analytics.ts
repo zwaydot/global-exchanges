@@ -46,10 +46,13 @@ function trackUmami(eventName: string, data?: Record<string, any>): void {
  * 追踪页面访问
  */
 export function trackPageView(): void {
-  // Umami 脚本已自带 PV 统计，这里保持兼容但不重复上报
+  // 本地开发不统计，仅提示
   if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    console.log('[Analytics] page_view skipped (handled by Umami)');
+    console.log('[Analytics] page_view skipped on localhost');
+    return;
   }
+  // 非本地：显式上报给 Umami，确保有 PV 数据
+  trackUmami('page_view');
 }
 
 /**
