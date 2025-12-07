@@ -9,6 +9,7 @@ import { Exchange, ExchangeDetails, ExchangeStatsMeta, ExchangeStatsSnapshot } f
 import { fetchExchangeDetails } from './services/geminiService';
 import { fetchExchangeStats } from './services/exchangeStatsService';
 import { normalizeKey } from './lib/exchangeStats';
+import { trackPageView, trackPanelOpen, trackPanelClose, trackTwitterCta, trackDrivenCta, trackLeaderboardCta } from './lib/analytics';
 import { trackPageView, trackPanelOpen, trackPanelClose } from './lib/analytics';
 
 // Parent exchange mapping for fallback lookup
@@ -142,6 +143,7 @@ const App: React.FC = () => {
             target="_blank" 
             rel="noopener noreferrer"
             className="relative inline-block pointer-events-auto group"
+            onClick={() => trackTwitterCta()}
           >
             <span className="text-gray-400 transition-opacity duration-300 ease-in-out group-hover:opacity-0">
               @zway
@@ -158,6 +160,7 @@ const App: React.FC = () => {
             rel="noopener noreferrer"
             className="mt-3 inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-cyan-300 text-xs md:text-sm pointer-events-auto group hover:opacity-80 transition-opacity font-medium"
             aria-label="Visit Driven.ai to see market drivers"
+            onClick={() => trackDrivenCta()}
           >
             See what's driving the market <span className="inline-block transition-transform group-hover:translate-x-1 text-amber-200">→</span>
           </a>
@@ -166,7 +169,10 @@ const App: React.FC = () => {
 
       {/* Leaderboard Button */}
       <div className="absolute bottom-16 left-1/2 -translate-x-1/2 md:bottom-auto md:left-auto md:top-0 md:right-0 md:translate-x-0 p-0 md:p-6 z-20 pointer-events-auto">
-        <LeaderboardButton onClick={() => setIsLeaderboardOpen(true)} />
+        <LeaderboardButton onClick={() => {
+          trackLeaderboardCta();
+          setIsLeaderboardOpen(true);
+        }} />
       </div>
 
       {/* Semantic Legend Section - REMOVED per user request */}

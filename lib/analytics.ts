@@ -9,7 +9,10 @@ export type AnalyticsEventType =
   | 'marker_click'       // 点击标记点
   | 'copy_image'         // 点击复制图片按钮
   | 'panel_open'         // 打开详情面板
-  | 'panel_close';       // 关闭详情面板
+  | 'panel_close'        // 关闭详情面板
+  | 'cta_twitter'        // 点击 Twitter
+  | 'cta_driven'         // 点击 Driven.ai
+  | 'cta_leaderboard';   // 打开排行榜入口
 
 export interface AnalyticsEvent {
   type: AnalyticsEventType;
@@ -102,4 +105,19 @@ export function trackPanelOpen(exchangeId: string, exchangeName: string): void {
  */
 export function trackPanelClose(): void {
   trackUmami('panel_close');
+}
+
+/** 点击 Twitter 入口 */
+export function trackTwitterCta(): void {
+  trackUmami('cta_twitter');
+}
+
+/** 点击 Driven.ai 入口 */
+export function trackDrivenCta(): void {
+  trackUmami('cta_driven');
+}
+
+/** 点击排行榜按钮 */
+export function trackLeaderboardCta(): void {
+  trackUmami('cta_leaderboard');
 }
