@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useMemo, useState } from 'react';
 import Globe, { GlobeMethods } from 'react-globe.gl';
 import * as THREE from 'three';
 import { Exchange } from '../types';
+import { trackExchangeClick, trackMarkerClick } from '../lib/analytics';
 
 interface GlobeVizProps {
   exchanges: Exchange[];
@@ -383,10 +384,13 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
     }));
   }, [exchanges]);
 
-  const handleFocus = (lat: number, lng: number, data: Exchange) => {
+  const handleFocus = (lat: number, lng: number, data: Exchange, source: 'label' | 'point' | 'marker' | 'custom_layer' = 'point') => {
     isFocused.current = true;
     lastFocusTime.current = Date.now();
     updateRotation();
+    
+    // 追踪点击事件
+    trackExchangeClick(data.id, data.name, source);
     
     onSelect(data);
     
@@ -465,7 +469,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       // Handle clicks on Points (Small exchanges)
       onPointClick={(point: any) => {
         const data = point.data as Exchange;
-        if (data) handleFocus(data.lat, data.lng, data);
+        if (data) handleFocus(data.lat, data.lng, data, 'point');
       }}
       onPointHover={(point: any) => {
         isHovering.current = !!point;
@@ -503,7 +507,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
         }
         
         if (data && typeof data === 'object' && 'lat' in data && 'lng' in data) {
-          handleFocus(data.lat, data.lng, data);
+          handleFocus(data.lat, data.lng, data, 'custom_layer');
         } else {
           console.warn('[GlobeViz] Failed to extract exchange data from custom layer click', obj);
         }
@@ -517,7 +521,7 @@ const GlobeViz: React.FC<GlobeVizProps> = ({ exchanges, onSelect }) => {
       }}
       onLabelClick={(label: any) => {
         const data = label.exchangeData;
-        if (data) handleFocus(data.lat, data.lng, data);
+        if (data) handleFocus(data.lat, data.lng, data, 'label');
       }}
     />
   );

@@ -244,6 +244,33 @@
       }
     ]
     </script>
+    <!-- Umami Cloud Analytics（按域名加载，隔离 prod / staging） -->
+    <script>
+      (function() {
+        var host = window.location.hostname;
+        var config = {
+          'deepstock.pro': {
+            id: 'dc3c9021-682f-47bd-ac1f-462e1eb18951',
+            domains: 'deepstock.pro'
+          },
+          'staging.deepstock.pro': {
+            id: '1b8c1766-58ff-4e1c-af6a-d0ca94edcc0b',
+            domains: 'staging.deepstock.pro'
+          }
+        };
+        var entry = config[host];
+        if (!entry) {
+          console.log('[Umami] skip tracking on host:', host);
+          return;
+        }
+        var s = document.createElement('script');
+        s.defer = true;
+        s.src = 'https://cloud.umami.is/script.js';
+        s.setAttribute('data-website-id', entry.id);
+        s.setAttribute('data-domains', entry.domains);
+        document.head.appendChild(s);
+      })();
+    </script>
   <link rel="stylesheet" href="/index.css">
 </head>
   <body>
@@ -281,6 +308,12 @@
         }
       });
     </script>
+    
+    <!-- Cloudflare Web Analytics (免费，隐私友好) -->
+    <!-- 在 Cloudflare Dashboard 中启用 Web Analytics 后，会自动注入 token -->
+    <!-- 如果已启用，Cloudflare 会自动添加此脚本，无需手动配置 -->
+    <!-- 如需手动添加，请访问: https://developers.cloudflare.com/analytics/web-analytics/ -->
+    
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

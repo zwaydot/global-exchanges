@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { snapdom } from '@zumer/snapdom';
+import { trackCopyImage } from '../lib/analytics';
 
 interface SnapshotData {
   exchange: string;
@@ -115,6 +116,9 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
       await navigator.clipboard.write([
         new ClipboardItem({ 'image/png': pngBlob })
       ]);
+
+      // 追踪复制图片事件
+      trackCopyImage(exchangeName);
 
       setCopyStatus('success');
       setTimeout(() => setCopyStatus('idle'), 2000);
