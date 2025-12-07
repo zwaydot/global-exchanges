@@ -113,6 +113,7 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
         ? blob
         : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
 
+<<<<<<< HEAD
       // 检测是否为移动端
       const isMobile = /iphone|ipad|ipod|android|mobile/i.test(navigator.userAgent);
       
@@ -209,6 +210,9 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
           setCopyErrorMessage(null);
         }, 2000);
       }
+
+      setCopyStatus('success');
+      setTimeout(() => setCopyStatus('idle'), 2000);
     } catch (err) {
       console.error('Copy failed:', err);
       setCopyStatus('error');
