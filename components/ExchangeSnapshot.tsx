@@ -113,51 +113,34 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
         ? blob
         : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
 
-      // 尝试使用剪贴板 API（优先）
-      const tryClipboard = async (): Promise<boolean> => {
-        try {
-          if (typeof navigator !== 'undefined' 
-            && navigator.clipboard 
-            && navigator.clipboard.write 
-            && typeof ClipboardItem !== 'undefined') {
-            await navigator.clipboard.write([
-              new ClipboardItem({ 'image/png': pngBlob })
-            ]);
-            return true;
-          }
-        } catch (e) {
-          // 剪贴板失败，返回 false 使用 fallback
-          console.debug('Clipboard write failed, using fallback:', e);
+      // 移动端兼容：尝试 Clipboard API，失败则降级为下载
+      try {
+        // 检查 Clipboard API 是否可用且支持图片
+        if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': pngBlob })
+          ]);
+        } else {
+          throw new Error('Clipboard API not supported');
         }
-        return false;
-      };
-
-      const clipboardSuccess = await tryClipboard();
-      
-      if (clipboardSuccess) {
-        trackCopyImage(exchangeName);
-        setCopyStatus('success');
-        setTimeout(() => setCopyStatus('idle'), 2000);
-      } else {
-        // Fallback：在页面中显示图片，让用户长按保存（移动端最可靠）
+      } catch (clipboardError) {
+        // 降级方案：移动端下载图片
         const url = URL.createObjectURL(pngBlob);
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain; z-index: 9999; background: rgba(0,0,0,0.9); cursor: pointer;';
-        img.onclick = () => {
-          document.body.removeChild(img);
-          URL.revokeObjectURL(url);
-        };
-        document.body.appendChild(img);
-        
-        trackCopyImage(exchangeName);
-        setCopyStatus('success');
-        setCopyErrorMessage('图片已显示，请长按保存');
-        setTimeout(() => {
-          setCopyStatus('idle');
-          setCopyErrorMessage(null);
-        }, 3000);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${exchangeName.replace(/\s+/g, '-')}-snapshot.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        // 移动端下载也算成功
       }
+
+      // 追踪复制图片事件
+      trackCopyImage(exchangeName);
+
+      setCopyStatus('success');
+      setTimeout(() => setCopyStatus('idle'), 2000);
     } catch (err) {
       console.error('Copy failed:', err);
       setCopyStatus('error');
