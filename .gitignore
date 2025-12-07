@@ -34,3 +34,6 @@ DEPLOY.md
 
 # Wrangler config with secrets
 wrangler-cron.toml
+
+# Cursor auto-saved images
+assets/
