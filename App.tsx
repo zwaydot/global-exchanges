@@ -9,6 +9,7 @@ import { Exchange, ExchangeDetails, ExchangeStatsMeta, ExchangeStatsSnapshot } f
 import { fetchExchangeDetails } from './services/geminiService';
 import { fetchExchangeStats } from './services/exchangeStatsService';
 import { normalizeKey } from './lib/exchangeStats';
+import { trackPageView, trackPanelOpen, trackPanelClose } from './lib/analytics';
 
 // Parent exchange mapping for fallback lookup
 // If a child exchange (e.g., Euronext Paris) has no data, try parent (e.g., Euronext)
@@ -41,6 +42,9 @@ const App: React.FC = () => {
       loader.style.opacity = '0';
       setTimeout(() => loader.remove(), 500);
     }
+    
+    // 追踪页面访问
+    trackPageView();
   }, []);
 
   const loadStatsForExchange = useCallback(async (exchange: Exchange) => {
@@ -101,6 +105,10 @@ const App: React.FC = () => {
     setSelectedExchange(exchange);
     setDetails(null);
     setIsLoading(true);
+    
+    // 追踪面板打开事件
+    trackPanelOpen(exchange.id, exchange.name);
+    
     void loadStatsForExchange(exchange);
 
     try {
@@ -114,6 +122,8 @@ const App: React.FC = () => {
   }, [selectedExchange, loadStatsForExchange]);
 
   const closePanel = () => {
+    // 追踪面板关闭事件
+    trackPanelClose();
     setSelectedExchange(null);
     setDetails(null);
   };
