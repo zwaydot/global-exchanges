@@ -423,6 +423,43 @@ export function apiProxy(): Plugin {
           }
         }
 
+        // 4. /api/analytics (本地开发时直接返回成功，生产环境由 Cloudflare Functions 处理)
+        if (req.url?.startsWith('/api/analytics')) {
+          if (req.method === 'OPTIONS') {
+            res.writeHead(204, {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'POST, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type',
+              'Access-Control-Max-Age': '86400',
+            });
+            res.end();
+            return;
+          }
+          if (req.method === 'POST') {
+            // 在开发环境下，只记录日志，不实际存储
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+              try {
+                const event = JSON.parse(body);
+                console.log('[Analytics Dev]', event);
+                res.writeHead(200, { 
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                });
+                res.end(JSON.stringify({ success: true, received: event.type }));
+              } catch (e) {
+                res.writeHead(400, { 
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                });
+                res.end(JSON.stringify({ error: 'Invalid JSON' }));
+              }
+            });
+            return;
+          }
+        }
+
         next();
       });
     }
