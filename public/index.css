@@ -1,0 +1,6 @@
+/* Minimal placeholder to avoid MIME/type warnings.
+   Keep here even if styles come from Tailwind CDN. */
+
+:root {
+  color-scheme: dark;
+}
