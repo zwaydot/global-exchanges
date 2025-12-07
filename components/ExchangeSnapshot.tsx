@@ -113,85 +113,63 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
         ? blob
         : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
 
-      // 检测是否为移动端
-      const isMobile = /iphone|ipad|ipod|android|mobile/i.test(navigator.userAgent);
-      
-      // 移动端：直接使用全屏显示方案（最可靠）
-      if (isMobile) {
-        const url = URL.createObjectURL(pngBlob);
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain; z-index: 9999; background: rgba(0,0,0,0.95); cursor: pointer; touch-action: none;';
-        img.alt = '长按保存图片';
-        
-        // 点击或触摸关闭
-        const close = () => {
-          if (document.body.contains(img)) {
-            document.body.removeChild(img);
-            URL.revokeObjectURL(url);
-          }
-        };
-        img.onclick = close;
-        img.ontouchstart = (e) => {
-          // 长按检测
-          const timer = setTimeout(() => {
-            // 长按超过 500ms，显示提示
-            const tip = document.createElement('div');
-            tip.textContent = '长按图片保存到相册';
-            tip.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 8px; z-index: 10000; font-size: 14px; pointer-events: none;';
-            document.body.appendChild(tip);
-            setTimeout(() => {
-              if (document.body.contains(tip)) {
-                document.body.removeChild(tip);
-              }
-            }, 2000);
-          }, 500);
-          
-          img.ontouchend = () => {
-            clearTimeout(timer);
-            // 短按关闭
-            setTimeout(close, 100);
-          };
-          e.preventDefault();
-        };
-        
-        document.body.appendChild(img);
-        trackCopyImage(exchangeName);
-        setCopyStatus('success');
-        setCopyErrorMessage('图片已显示，长按保存');
-        setTimeout(() => {
-          setCopyStatus('idle');
-          setCopyErrorMessage(null);
-        }, 3000);
-        return;
-      }
-
-      // 桌面端：尝试使用剪贴板 API
-      const tryClipboard = async (): Promise<boolean> => {
+      // 统一策略：优先尝试 Clipboard API（移动端和桌面端都尝试）
+      const tryClipboard = async (): Promise<{ success: boolean; reason?: string }> => {
         try {
-          if (typeof navigator !== 'undefined' 
-            && navigator.clipboard 
-            && navigator.clipboard.write 
-            && typeof ClipboardItem !== 'undefined') {
-            await navigator.clipboard.write([
-              new ClipboardItem({ 'image/png': pngBlob })
-            ]);
-            return true;
+          // 检查基础支持
+          if (typeof navigator === 'undefined' || !navigator.clipboard || !navigator.clipboard.write) {
+            return { success: false, reason: 'Clipboard API not available' };
           }
+
+          if (typeof ClipboardItem === 'undefined') {
+            return { success: false, reason: 'ClipboardItem not supported' };
+          }
+
+          // 检查图片大小（Safari 限制约 1-5MB）
+          const sizeMB = pngBlob.size / (1024 * 1024);
+          if (sizeMB > 5) {
+            console.warn(`Image too large for clipboard (${sizeMB.toFixed(2)}MB), Safari may fail`);
+          }
+
+          // 检查 MIME 类型支持
+          if (ClipboardItem.supports && !(await ClipboardItem.supports('image/png'))) {
+            return { success: false, reason: 'image/png not supported by ClipboardItem' };
+          }
+
+          // 尝试写入剪贴板
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': pngBlob })
+          ]);
+          
+          return { success: true };
         } catch (e) {
-          console.debug('Clipboard write failed, using fallback:', e);
+          const error = e instanceof Error ? e.message : String(e);
+          console.debug('Clipboard write failed:', error);
+          
+          // 诊断常见错误
+          if (error.includes('not allowed') || error.includes('permission')) {
+            return { success: false, reason: 'Permission denied (may need direct user interaction)' };
+          }
+          if (error.includes('NotSupportedError') || error.includes('not supported')) {
+            return { success: false, reason: 'ClipboardItem not supported on this browser' };
+          }
+          
+          return { success: false, reason: error };
         }
-        return false;
       };
 
-      const clipboardSuccess = await tryClipboard();
+      const clipboardResult = await tryClipboard();
+      const clipboardSuccess = clipboardResult.success;
       
       if (clipboardSuccess) {
+        // Clipboard API 成功：直接复制到剪贴板
         trackCopyImage(exchangeName);
         setCopyStatus('success');
         setTimeout(() => setCopyStatus('idle'), 2000);
       } else {
-        // 桌面端 fallback：下载图片
+        // Clipboard API 失败：降级为下载（移动端和桌面端统一处理）
+        console.warn('Clipboard failed, reason:', clipboardResult.reason);
+        
         const url = URL.createObjectURL(pngBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -203,7 +181,9 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
         
         trackCopyImage(exchangeName);
         setCopyStatus('success');
-        setCopyErrorMessage('图片已下载');
+        // 显示失败原因（仅在开发环境或特定情况下）
+        const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        setCopyErrorMessage(isDev ? `已下载（剪贴板失败: ${clipboardResult.reason}）` : '图片已下载');
         setTimeout(() => {
           setCopyStatus('idle');
           setCopyErrorMessage(null);
