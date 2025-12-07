@@ -192,6 +192,13 @@ Cron Worker (UTC 22:00)
 - **性能优化**: 并行获取天气和市场数据，减少总等待时间
 - **可访问性**: 图片有 alt 文本，按钮有 title 提示
 
+## 7. 分析与埋点（Umami）
+- **技术栈**: Umami Cloud（prod: deepstock.pro, staging: staging.deepstock.pro），通过 `index.html` 动态按域名加载脚本并设置 data-domains。
+- **自定义事件**: `exchange_click`（含 exchange/name/source）、`marker_click`、`copy_image`、`panel_open`、`panel_close`、`cta_twitter`、`cta_driven`、`cta_leaderboard`。
+- **页面 PV**: `trackPageView` 在非本地调用 `umami.track('page_view')`，本地跳过；其余事件均在各组件调用 `trackUmami`。
+- **避免重复上报**: `onCustomLayerClick` 只触发一次 `exchange_click`（source=custom_layer），避免双计数。
+- **本地/预览隔离**: 非白名单域名不加载脚本，防止开发流量污染；若需新增环境，请在 `index.html` 域名映射中添加对应 website-id。
+
 ---
 *Last Updated: 2025-12-06*
 
