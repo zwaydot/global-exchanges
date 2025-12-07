@@ -167,7 +167,7 @@ const App: React.FC = () => {
       </header>
 
       {/* Leaderboard Button */}
-      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 md:bottom-auto md:left-auto md:top-0 md:right-0 md:translate-x-0 p-0 md:p-6 z-20 pointer-events-auto">
+      <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2 md:bottom-auto md:left-auto md:top-0 md:right-0 md:translate-x-0 p-0 md:p-6 z-20 pointer-events-auto">
         <LeaderboardButton onClick={() => {
           trackLeaderboardCta();
           setIsLeaderboardOpen(true);
