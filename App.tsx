@@ -10,7 +10,6 @@ import { fetchExchangeDetails } from './services/geminiService';
 import { fetchExchangeStats } from './services/exchangeStatsService';
 import { normalizeKey } from './lib/exchangeStats';
 import { trackPageView, trackPanelOpen, trackPanelClose, trackTwitterCta, trackDrivenCta, trackLeaderboardCta } from './lib/analytics';
-import { trackPageView, trackPanelOpen, trackPanelClose } from './lib/analytics';
 
 // Parent exchange mapping for fallback lookup
 // If a child exchange (e.g., Euronext Paris) has no data, try parent (e.g., Euronext)
