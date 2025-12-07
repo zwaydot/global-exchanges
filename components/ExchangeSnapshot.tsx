@@ -113,15 +113,38 @@ export const ExchangeSnapshot: React.FC<ExchangeSnapshotProps> = ({ exchangeName
         ? blob
         : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
 
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': pngBlob })
-      ]);
+      const writeSupported = typeof navigator !== 'undefined'
+        && !!(navigator as any).clipboard?.write
+        && typeof ClipboardItem !== 'undefined';
 
-      // 追踪复制图片事件
-      trackCopyImage(exchangeName);
-
-      setCopyStatus('success');
-      setTimeout(() => setCopyStatus('idle'), 2000);
+      if (writeSupported) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': pngBlob })
+        ]);
+        trackCopyImage(exchangeName);
+        setCopyStatus('success');
+        setTimeout(() => setCopyStatus('idle'), 2000);
+      } else {
+        // Fallback：打开图片/下载，方便移动端长按保存
+        const url = URL.createObjectURL(pngBlob);
+        const win = window.open(url, '_blank');
+        if (!win) {
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${exchangeName || 'snapshot'}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+        trackCopyImage(exchangeName);
+        setCopyStatus('success');
+        setCopyErrorMessage('已打开图片，请保存到相册');
+        setTimeout(() => {
+          setCopyStatus('idle');
+          setCopyErrorMessage(null);
+        }, 2500);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }
     } catch (err) {
       console.error('Copy failed:', err);
       setCopyStatus('error');
