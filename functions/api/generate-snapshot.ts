@@ -202,19 +202,50 @@ async function fetchMarketData(
   
   // Try Gemini search first (works for all indices)
   if (geminiApiKey) {
-    try {
-      console.log(`[Market Data] Attempting Gemini search for ${indexName}...`);
-      const geminiData = await fetchMarketDataViaGemini(indexName, symbol, geminiApiKey);
-      console.log(`[Market Data] Gemini returned:`, geminiData);
-      if (geminiData.price > 0) {
-        console.log(`[Market Data] ✅ Successfully fetched ${indexName} via Gemini:`, geminiData);
-        return geminiData;
-      } else {
-        console.warn(`[Market Data] ⚠️ Gemini returned price=0 for ${indexName}, trying FMP...`);
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`[Market Data] Attempting Gemini search for ${indexName} (attempt ${retryCount + 1}/${maxRetries})...`);
+        const geminiData = await fetchMarketDataViaGemini(indexName, symbol, geminiApiKey, retryCount > 0);
+        console.log(`[Market Data] Gemini returned:`, geminiData);
+        
+        // 验证数据合理性
+        const isValid = geminiData.price > 0 && 
+                       Math.abs(geminiData.changePercent) <= 50; // 单日涨跌幅通常不会超过50%
+        
+        if (isValid) {
+          console.log(`[Market Data] ✅ Successfully fetched ${indexName} via Gemini:`, geminiData);
+          return geminiData;
+        } else {
+          if (geminiData.price <= 0) {
+            console.warn(`[Market Data] ⚠️ Gemini returned invalid price (${geminiData.price}) for ${indexName}`);
+          }
+          if (Math.abs(geminiData.changePercent) > 50) {
+            console.warn(`[Market Data] ⚠️ Gemini returned unusual changePercent (${geminiData.changePercent}%) for ${indexName}`);
+          }
+          
+          retryCount++;
+          if (retryCount < maxRetries) {
+            console.log(`[Market Data] Retrying Gemini search with different strategy...`);
+            // 等待一小段时间再重试
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          } else {
+            console.warn(`[Market Data] ⚠️ Gemini returned invalid data after ${maxRetries} attempts, trying FMP...`);
+          }
+        }
+      } catch (e) {
+        console.error(`[Market Data] ❌ Gemini failed for ${indexName} (attempt ${retryCount + 1}):`, e);
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          console.warn(`[Market Data] Trying FMP fallback after ${maxRetries} failed attempts...`);
+        } else {
+          // 等待后重试
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
-    } catch (e) {
-      console.error(`[Market Data] ❌ Gemini failed for ${indexName}:`, e);
-      console.warn(`[Market Data] Trying FMP fallback...`);
     }
   } else {
     console.warn(`[Market Data] ⚠️ No Gemini API Key, skipping Gemini search`);
@@ -263,20 +294,77 @@ async function fetchMarketData(
 
 /**
  * Use Gemini's search capability to fetch real-time index data
- * REMOVED JSON Schema to support tool use better
+ * Optimized prompt to ensure accurate, real-time data retrieval
+ * @param isRetry - If true, use alternative search strategy for retry attempts
  */
 async function fetchMarketDataViaGemini(
   indexName: string,
   symbol: string,
-  apiKey: string
+  apiKey: string,
+  isRetry: boolean = false
 ): Promise<{ price: number; change: number; changePercent: number }> {
   const model = 'gemini-flash-latest';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-  const prompt = `Search for the current real-time price and percentage change of ${indexName} (${symbol}). 
-  After finding the data, output it in this exact STRICT JSON format (keys must be double-quoted string, no trailing commas, no markdown):
-  {"price": 1234.56, "change": 12.34, "changePercent": 0.56}
-  If not found, output: {"price": 0, "change": 0, "changePercent": 0}`;
+  // 获取当前日期和时间，用于验证数据新鲜度
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const now = new Date();
+  const currentDateStr = now.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  // 重试时使用更具体的搜索策略
+  const searchQueries = isRetry 
+    ? [
+        `"${indexName}" site:finance.yahoo.com`,
+        `"${symbol}" site:google.com/finance`,
+        `"${indexName}" "${today}" stock price`,
+        `"${indexName}" live market data today`
+      ]
+    : [
+        `${indexName} ${today} price`,
+        `${symbol} live quote today`,
+        `${indexName} current market price`,
+        `${indexName} real-time index value`
+      ];
+  
+  const prompt = `You are a financial data expert. Your task is to find the MOST RECENT, REAL-TIME trading data for ${indexName} (ticker: ${symbol}).
+
+SEARCH STRATEGY:
+1. Search using these specific queries to find the latest data:
+${searchQueries.map(q => `   - ${q}`).join('\n')}
+2. ${isRetry ? 'Focus on these specific authoritative sources:' : 'Prioritize authoritative sources in this order:'}
+   - Official exchange website
+   - Yahoo Finance (finance.yahoo.com) - search for "${indexName}" or "${symbol}"
+   - Google Finance (google.com/finance)
+   - Bloomberg (bloomberg.com)
+   - MarketWatch (marketwatch.com)
+   - Reuters Finance (reuters.com)
+3. Check the timestamp/date on the source - data MUST be from ${currentDateStr} or the most recent trading session
+4. If markets are closed, use the latest closing price from the most recent trading day
+5. ${isRetry ? 'Look for the main quote/price widget on the page, which typically shows the current price, change, and change percentage prominently.' : 'Extract data from the main quote display, not from historical charts or tables.'}
+
+DATA EXTRACTION:
+- Extract the CURRENT/LIVE index value (the main price shown prominently, not historical data)
+- Extract the CHANGE in points (the absolute change from previous close, can be positive or negative)
+- Extract the CHANGE PERCENTAGE (the percentage change, can be positive or negative)
+- All values must be NUMBERS (not strings, no commas, no currency symbols like $, €, ¥)
+- Remove any formatting: "12,345.67" → 12345.67
+
+VALIDATION:
+- Price must be a positive number (typically > 0)
+- Change percentage should typically be between -20% and +20% for normal trading days (extreme moves can be -50% to +50%)
+- Verify the data source shows it's from today or the most recent trading day
+- Double-check that you're reading the CURRENT price, not yesterday's close or a historical value
+
+OUTPUT FORMAT:
+Output ONLY valid JSON (no markdown code blocks, no explanations, no text before/after, no trailing commas):
+{"price": 1234.56, "change": 12.34, "changePercent": 0.56}
+
+If you cannot find reliable current data after thorough search, output: {"price": 0, "change": 0, "changePercent": 0}`;
 
   const payload = {
     contents: [{ parts: [{ text: prompt }] }],
@@ -351,12 +439,22 @@ async function fetchMarketDataViaGemini(
     if (jsonMatch) {
         const data = JSON.parse(jsonMatch[0]);
         console.log(`[Gemini] Parsed JSON data:`, data);
-        const result = {
-          price: typeof data.price === 'number' ? data.price : 0,
-          change: typeof data.change === 'number' ? data.change : 0,
-          changePercent: typeof data.changePercent === 'number' ? data.changePercent : 0
-        };
-        console.log(`[Gemini] Final result:`, result);
+        
+        // 数据验证：确保价格是合理的正数
+        const price = typeof data.price === 'number' ? data.price : 0;
+        const change = typeof data.change === 'number' ? data.change : 0;
+        const changePercent = typeof data.changePercent === 'number' ? data.changePercent : 0;
+        
+        // 验证数据合理性
+        if (price <= 0) {
+          console.warn(`[Gemini] ⚠️ Invalid price (${price}), data may be incorrect`);
+        }
+        if (Math.abs(changePercent) > 50) {
+          console.warn(`[Gemini] ⚠️ Unusual changePercent (${changePercent}%), data may be incorrect`);
+        }
+        
+        const result = { price, change, changePercent };
+        console.log(`[Gemini] ✅ Final validated result:`, result);
         return result;
     }
     console.error(`[Gemini] No JSON match found in text:`, cleanText);
